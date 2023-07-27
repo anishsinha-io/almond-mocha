@@ -12,15 +12,15 @@ services:
       POSTGRES_INITDB_ARGS: "-A md5"
     ports:
       - "5432:5432"
-  mocha:
-    hostname: mocha
-    container_name: mocha
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    ports:
-      - "8888:8888"
-    volumes:
-      - .:/app
-    depends_on:
-      - postgres
+  # mocha:
+  #   hostname: mocha
+  #   container_name: mocha
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.dev
+  #   ports:
+  #     - "8888:8888"
+  #   volumes:
+  #     - .:/app
+  #   depends_on:
+  #     - postgres

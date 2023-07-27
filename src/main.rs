@@ -1,5 +1,5 @@
 use actix_web::{web, App, HttpServer};
-use app::{controller, state::AppState};
+use app::{routes, state::AppState};
 
 mod app;
 
@@ -12,7 +12,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(state.clone())
-            .service(web::scope("/api").configure(controller::config))
+            .service(web::scope("/api").configure(routes::config))
     })
     .bind(("0.0.0.0", 8888))?
     .run()
