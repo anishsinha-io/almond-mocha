@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  postgres:
+    hostname: postgres
+    container_name: postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_INITDB_ARGS: "-A md5"
+    ports:
+      - "5432:5432"
+  mocha:
+    hostname: mocha
+    container_name: mocha
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8888:8888"
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
