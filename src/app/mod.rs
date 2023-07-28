@@ -1,5 +1,8 @@
 mod auth;
-pub mod controller;
+pub mod controllers;
 mod datasources;
-pub mod health;
+mod dto;
+mod posts;
+pub mod routes;
 pub mod state;
+mod users;

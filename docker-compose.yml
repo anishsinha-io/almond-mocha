@@ -12,15 +12,26 @@ services:
       POSTGRES_INITDB_ARGS: "-A md5"
     ports:
       - "5432:5432"
-  mocha:
-    hostname: mocha
-    container_name: mocha
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
+  pgadmin:
+    container_name: jen-pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: anishsinha0128@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: anishsinha
     ports:
-      - "8888:8888"
-    volumes:
-      - .:/app
+      - "8889:80"
+    hostname: pgadmin
     depends_on:
       - postgres
+  # mocha:
+  #   hostname: mocha
+  #   container_name: mocha
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.dev
+  #   ports:
+  #     - "8888:8888"
+  #   volumes:
+  #     - .:/app
+  #   depends_on:
+  #     - postgres

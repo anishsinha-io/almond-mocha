@@ -1,5 +1,5 @@
-use actix_web::{web, App, HttpServer};
-use app::{controller, state::AppState};
+use actix_web::{middleware::Logger, web, App, HttpServer};
+use app::{routes, state::AppState};
 
 mod app;
 
@@ -7,12 +7,15 @@ mod app;
 async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().expect("error loading environment variables");
 
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
     let state = web::Data::new(AppState::new("milkandmocha").await);
 
     HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
             .app_data(state.clone())
-            .service(web::scope("/api").configure(controller::config))
+            .service(web::scope("/api").configure(routes::config))
     })
     .bind(("0.0.0.0", 8888))?
     .run()
