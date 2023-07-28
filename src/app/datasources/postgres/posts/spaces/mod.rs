@@ -2,14 +2,15 @@ use sqlx::{types::Uuid, Pool, Postgres};
 use std::error::Error;
 
 use crate::app::datasources::entities::Space;
-use crate::app::dto::{CreateSpace, GetSpaceById};
+use crate::app::dto::{CreateSpace, GetSpaceById, PaginationLimits};
+use crate::app::pagination::PaginationContainer;
 
 pub async fn create_space(
     pool: &Pool<Postgres>,
     data: CreateSpace,
 ) -> Result<String, Box<dyn Error + Send + Sync>> {
     let space = sqlx::query!(
-        r#"insert into jen.spaces (bio, space_name) values ($1, $2) on conflict (space_name) do update set bio=$2 returning id"#,
+        r#"insert into jen.spaces (bio, space_name) values ($1, $2) on conflict (space_name) do update set bio=$1 returning id"#,
         data.bio,
         data.space_name
     )
@@ -17,6 +18,30 @@ pub async fn create_space(
     .await?;
 
     Ok(space.id.to_string())
+}
+
+pub async fn get_spaces(
+    pool: &Pool<Postgres>,
+    data: PaginationLimits,
+) -> Result<PaginationContainer<Space>, Box<dyn Error + Send + Sync>> {
+    let spaces: Vec<Space> = sqlx::query_as!(
+        Space,
+        r#"select id, space_name, bio, created_at, updated_at from jen.spaces order by space_name limit $1 offset $2"#,
+        (data.limit as i64) + 1,
+        data.offset as i64
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let num_items = spaces.len() - 1;
+
+    let container = PaginationContainer {
+        items: spaces[..num_items].to_vec(),
+        start: data.offset,
+        end: data.offset + data.limit,
+        done: (data.limit as usize) > num_items,
+    };
+    Ok(container)
 }
 
 pub async fn get_space_by_id(
@@ -33,6 +58,8 @@ pub async fn get_space_by_id(
     .await?;
     Ok(space)
 }
+
+pub async fn edit_space() {}
 
 #[cfg(test)]
 mod tests {
@@ -51,7 +78,7 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_create_and_get_space() {
+    pub async fn test_spaces() {
         initialize();
         let pool = create_pool(5).await;
 
@@ -66,11 +93,62 @@ mod tests {
 
         let get_space_data = GetSpaceById { id };
 
-        let space = get_space_by_id(&pool, get_space_data)
+        let valid_space = get_space_by_id(&pool, get_space_data)
             .await
-            .expect("error fetching space")
-            .unwrap();
+            .expect("error fetching space");
 
-        println!("{:#?}", space);
+        assert!(valid_space.is_some());
+
+        let get_invalid_space_data = GetSpaceById {
+            id: "invalid".to_owned(),
+        };
+
+        let invalid_space = get_space_by_id(&pool, get_invalid_space_data)
+            .await
+            .expect("error fetching space");
+
+        assert!(invalid_space.is_none());
+
+        let new_spaces = [
+            ("Mathematics", "All about math."),
+            ("Biology", "Posts about biology"),
+            ("Chemistry", "All about chemistry!"),
+            ("Physics", "Everything about physics (:"),
+        ];
+
+        for space in new_spaces {
+            create_space(
+                &pool,
+                CreateSpace {
+                    space_name: space.0.to_owned(),
+                    bio: space.1.to_owned(),
+                },
+            )
+            .await
+            .expect("error creating space");
+        }
+
+        let mut limits = PaginationLimits {
+            offset: 0,
+            limit: 5,
+        };
+
+        let mut spaces = get_spaces(&pool, limits.clone())
+            .await
+            .expect("error getting spaces");
+
+        assert!(spaces.done);
+
+        limits.limit = 4;
+        spaces = get_spaces(&pool, limits.clone())
+            .await
+            .expect("error getting spaces");
+        assert!(!spaces.done);
+
+        limits.limit = 6;
+        spaces = get_spaces(&pool, limits.clone())
+            .await
+            .expect("error getting spaces");
+        assert!(spaces.done);
     }
 }
