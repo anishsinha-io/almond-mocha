@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::app::dto::HashAlgorithm;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetUserById {
     pub id: String,
@@ -17,8 +19,9 @@ pub struct CreateUser {
     pub last_name: String,
     pub email: String,
     pub username: String,
-    pub image_uri: Option<String>,
-    pub password: Option<String>,
+    pub image_uri: String,
+    pub hashed_password: Option<String>,
+    pub algorithm: Option<HashAlgorithm>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

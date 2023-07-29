@@ -41,7 +41,8 @@ create table if not exists users(
   username text not null,
   image_uri text not null,
   created_at timestamptz not null default current_timestamp,
-  updated_at timestamptz not null default current_timestamp
+  updated_at timestamptz not null default current_timestamp,
+  unique (email)
 );
 
 create or replace trigger update_users_timestamp
