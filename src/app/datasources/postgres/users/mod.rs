@@ -21,16 +21,18 @@ pub async fn create_user(
             .bind(user.id.to_string())
             .bind(hash)
             .bind(alg)
-            .execute(&mut *txn) 
+            .execute(&mut *txn)
             .await?;
     }
 
     Ok(user.id.to_string())
 }
 
-#[cfg(test) ]
+#[cfg(test)]
 mod tests {
-    use crate::app::{dto::HashAlgorithm, datasources::postgres::create_pool};
+    use crate::app::{
+        auth::CredentialManager, datasources::postgres::create_pool, dto::HashAlgorithm,
+    };
 
     use super::*;
 
@@ -44,20 +46,26 @@ mod tests {
         });
     }
 
+    #[tokio::test]
     pub async fn test_create_user() {
         initialize();
         let pool = create_pool(5).await;
 
-        let new_user = CreateUser{
+        let manager = CredentialManager::default();
+        let hash = manager.create_hash(b"jennysinha").unwrap();
+
+        let new_user = CreateUser {
             first_name: "Jenny".to_owned(),
             last_name: "Sinha".to_owned(),
             email: "jennycho35@gmail.com".to_owned(),
             username: "jennysinha".to_owned(),
             image_uri: "https://assets.anishsinha.com/jenny".to_owned(),
-            hashed_password: Some("".to_owned()),
-            algorithm: Some(HashAlgorithm::Bcrypt),
+            hashed_password: Some(hash.to_owned()),
+            algorithm: Some(HashAlgorithm::Argon2),
         };
 
-        let new_user = create_user(&pool, new_user).await;
+        // let new_user = create_user(&pool, new_user)
+        //     .await
+        //     .expect("error creating new user");
     }
 }

@@ -28,7 +28,6 @@ create type hash_algorithm as enum(
   'argon2',
   'bcrypt',
   'scrypt',
-  'pbkdf2'
 );
 
 --

@@ -6,6 +6,5 @@ use serde::{Deserialize, Serialize};
 pub enum HashAlgorithm {
     Argon2,
     Bcrypt,
-    Pbkdf2,
     Scrypt,
 }
