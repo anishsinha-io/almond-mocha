@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 mod spaces;
 
-pub use spaces::{CreateSpace, DeleteSpace, EditSpace, GetSpaceById};
+pub use spaces::{CreateSpace, DeleteSpace, GetSpaceById};
 
 #[derive(Serialize, Deserialize)]
 pub struct GetPostById {

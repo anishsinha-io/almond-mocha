@@ -2,7 +2,7 @@ use sqlx::{types::Uuid, Pool, Postgres};
 use std::error::Error;
 
 use crate::app::datasources::entities::Space;
-use crate::app::dto::{CreateSpace, GetSpaceById, PaginationLimits};
+use crate::app::dto::{CreateSpace, DeleteSpace, GetSpaceById, PaginationLimits};
 use crate::app::pagination::PaginationContainer;
 
 pub async fn create_space(
@@ -48,7 +48,7 @@ pub async fn get_space_by_id(
     pool: &Pool<Postgres>,
     data: GetSpaceById,
 ) -> Result<Option<Space>, Box<dyn Error + Send + Sync>> {
-    let id = Uuid::parse_str(&data.id).unwrap_or_else(|_| Uuid::nil());
+    let id = Uuid::parse_str(&data.id)?;
     let space: Option<Space> = sqlx::query_as!(
         Space,
         r#"select id, space_name, bio, created_at, updated_at from jen.spaces where id=$1"#,
@@ -59,7 +59,16 @@ pub async fn get_space_by_id(
     Ok(space)
 }
 
-pub async fn edit_space() {}
+pub async fn delete_space(
+    pool: &Pool<Postgres>,
+    data: DeleteSpace,
+) -> Result<(), Box<dyn Error + Send + Sync>> {
+    let id = Uuid::parse_str(&data.id)?;
+    sqlx::query!(r#"delete from jen.spaces where id=$1"#, id)
+        .execute(pool)
+        .await?;
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {
@@ -91,7 +100,7 @@ mod tests {
             .await
             .expect("error creating new space");
 
-        let get_space_data = GetSpaceById { id };
+        let get_space_data = GetSpaceById { id: id.clone() };
 
         let valid_space = get_space_by_id(&pool, get_space_data)
             .await
@@ -103,11 +112,9 @@ mod tests {
             id: "invalid".to_owned(),
         };
 
-        let invalid_space = get_space_by_id(&pool, get_invalid_space_data)
+        get_space_by_id(&pool, get_invalid_space_data)
             .await
-            .expect("error fetching space");
-
-        assert!(invalid_space.is_none());
+            .expect_err("space is invalid");
 
         let new_spaces = [
             ("Mathematics", "All about math."),
@@ -150,5 +157,14 @@ mod tests {
             .await
             .expect("error getting spaces");
         assert!(spaces.done);
+
+        delete_space(&pool, DeleteSpace { id: id.clone() })
+            .await
+            .expect("error deleting space");
+
+        let deleted_space = get_space_by_id(&pool, GetSpaceById { id: id.clone() })
+            .await
+            .expect("error getting space");
+        assert!(deleted_space.is_none());
     }
 }

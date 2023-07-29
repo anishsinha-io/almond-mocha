@@ -5,7 +5,7 @@ mod users;
 
 pub use pagination::PaginationLimits;
 pub use posts::{
-    CreatePost, CreateSpace, DeletePost, DeleteSpace, EditPost, EditSpace, GetPostById,
-    GetPostsByUser, GetSpaceById,
+    CreatePost, CreateSpace, DeletePost, DeleteSpace, EditPost, GetPostById, GetPostsByUser,
+    GetSpaceById,
 };
 pub use users::CreateUser;

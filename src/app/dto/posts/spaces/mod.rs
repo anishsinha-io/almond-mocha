@@ -12,12 +12,6 @@ pub struct GetSpaceById {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EditSpace {
-    pub space_name: String,
-    pub bio: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct DeleteSpace {
     pub id: String,
 }
