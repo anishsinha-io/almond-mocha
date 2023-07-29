@@ -18,7 +18,7 @@ pub async fn create_user(
 
     if let (Some(hash), Some(alg)) = (data.hashed_password, data.algorithm) {
         sqlx::query(r#"insert into jen.user_credentials (user_id, credential_hash, alg) values ($1, $2, $3)"#)
-            .bind(user.id.to_string())
+            .bind(user.id)
             .bind(hash)
             .bind(alg)
             .execute(&mut *txn)
@@ -64,8 +64,8 @@ mod tests {
             algorithm: Some(HashAlgorithm::Argon2),
         };
 
-        // let new_user = create_user(&pool, new_user)
-        //     .await
-        //     .expect("error creating new user");
+        let new_user = create_user(&pool, new_user)
+            .await
+            .expect("error creating new user");
     }
 }

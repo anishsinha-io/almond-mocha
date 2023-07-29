@@ -50,7 +50,6 @@ impl CredentialManager {
         match self.algorithm {
             HashAlgorithm::Argon2 => self.hash_argon2(candidate),
             HashAlgorithm::Bcrypt => self.hash_bcrypt(candidate),
-            HashAlgorithm::Scrypt => self.hash_scrypt(candidate),
         }
     }
 
@@ -62,15 +61,6 @@ impl CredentialManager {
                 argon2::verify_encoded(hash, candidate.as_bytes()).unwrap_or(false)
             }
             HashAlgorithm::Bcrypt => bcrypt::verify(candidate, hash).unwrap_or(false),
-            HashAlgorithm::Scrypt => {
-                if let Ok(parsed_hash) = PasswordHash::new(hash) {
-                    Scrypt
-                        .verify_password(candidate.as_bytes(), &parsed_hash)
-                        .is_ok()
-                } else {
-                    false
-                }
-            }
         }
     }
 }

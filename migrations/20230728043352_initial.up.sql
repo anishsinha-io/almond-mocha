@@ -3,12 +3,12 @@
 create schema if not exists jen;
 
 --
--- create uuid extension
-create extension if not exists "uuid-ossp" schema jen;
-
---
 -- search path
 set search_path to jen;
+
+--
+-- create uuid extension
+create extension if not exists "uuid-ossp";
 
 --
 -- update timestamp function
@@ -26,8 +26,7 @@ language plpgsql;
 -- hash algorithms type
 create type hash_algorithm as enum(
   'argon2',
-  'bcrypt',
-  'scrypt',
+  'bcrypt'
 );
 
 --
