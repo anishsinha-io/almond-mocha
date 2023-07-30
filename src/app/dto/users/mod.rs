@@ -26,6 +26,7 @@ pub struct CreateUser {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EditUser {
+    pub id: String,
     pub first_name: String,
     pub last_name: String,
     pub username: String,

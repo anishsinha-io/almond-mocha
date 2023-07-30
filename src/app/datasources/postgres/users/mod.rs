@@ -48,7 +48,23 @@ pub async fn get_user_by_email(
     Ok(user)
 }
 
-pub async fn edit_user(pool: &Pool<Postgres>, data: EditUser) {}
+pub async fn edit_user(
+    pool: &Pool<Postgres>,
+    data: EditUser,
+) -> Result<(), Box<dyn Error + Send + Sync>> {
+    let id = Uuid::parse_str(&data.id)?;
+    sqlx::query!(
+        "update jen.users set first_name=$2, last_name=$3, username=$4, image_uri=$5 where id=$1",
+        id,
+        data.first_name,
+        data.last_name,
+        data.username,
+        data.image_uri
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
+}
 
 pub async fn delete_user(
     pool: &Pool<Postgres>,
@@ -136,6 +152,31 @@ mod tests {
 
         assert!(by_id.is_some());
         assert_eq!(by_id.unwrap().id.to_string(), new_user.clone());
+
+        edit_user(
+            &pool,
+            EditUser {
+                id: new_user.clone(),
+                first_name: "Jenny".to_owned(),
+                last_name: "Sinha".to_owned(),
+                username: "jen_sinha".to_owned(),
+                image_uri: "https://assets.anishsinha.io/jen".to_owned(),
+            },
+        )
+        .await
+        .expect("error editing user");
+
+        let by_email = get_user_by_email(
+            &pool,
+            GetUserByEmail {
+                email: "jennycho35@gmail.com".to_owned(),
+            },
+        )
+        .await
+        .expect("error getting user by email");
+
+        assert!(by_email.is_some());
+        assert_eq!(by_email.unwrap().username, "jen_sinha");
 
         delete_user(
             &pool,
