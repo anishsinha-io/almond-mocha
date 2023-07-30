@@ -2,6 +2,7 @@ use std::env;
 
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
+mod auth;
 mod posts;
 mod users;
 
