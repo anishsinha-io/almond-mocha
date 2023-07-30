@@ -1,7 +1,8 @@
-use sqlx::{Pool, Postgres, Transaction};
+use sqlx::{types::Uuid, Pool, Postgres, Transaction};
 use std::error::Error;
 
-use crate::app::dto::CreateUser;
+use crate::app::datasources::entities::User;
+use crate::app::dto::{CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById};
 
 pub async fn create_user(
     pool: &Pool<Postgres>,
@@ -25,7 +26,40 @@ pub async fn create_user(
             .await?;
     }
 
+    txn.commit().await?;
+
     Ok(user.id.to_string())
+}
+
+pub async fn get_user_by_id(
+    pool: &Pool<Postgres>,
+    data: GetUserById,
+) -> Result<Option<User>, Box<dyn Error + Send + Sync>> {
+    let id = Uuid::parse_str(&data.id)?;
+    let user = sqlx::query_as!(User, r#"select id, first_name, last_name, email, username, image_uri, created_at, updated_at from jen.users where id=$1"#, id).fetch_optional(pool).await?;
+    Ok(user)
+}
+
+pub async fn get_user_by_email(
+    pool: &Pool<Postgres>,
+    data: GetUserByEmail,
+) -> Result<Option<User>, Box<dyn Error + Send + Sync>> {
+    let user = sqlx::query_as!(User, r#"select id, first_name, last_name, email, username, image_uri, created_at, updated_at from jen.users where email=$1"#, data.email).fetch_optional(pool).await?;
+    Ok(user)
+}
+
+pub async fn edit_user(pool: &Pool<Postgres>, data: EditUser) {}
+
+pub async fn delete_user(
+    pool: &Pool<Postgres>,
+    data: DeleteUser,
+) -> Result<(), Box<dyn Error + Send + Sync>> {
+    let id = Uuid::parse_str(&data.id)?;
+    sqlx::query(r#"delete from jen.users where id=$1"#)
+        .bind(id)
+        .execute(pool)
+        .await?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -47,9 +81,20 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_create_user() {
+    pub async fn test_users() {
         initialize();
         let pool = create_pool(5).await;
+
+        let mut nonexistent = get_user_by_email(
+            &pool,
+            GetUserByEmail {
+                email: "jennycho35@gmail.com".to_owned(),
+            },
+        )
+        .await
+        .expect("error getting user by email");
+
+        assert!(nonexistent.is_none());
 
         let manager = CredentialManager::default();
         let hash = manager.create_hash(b"jennysinha").unwrap();
@@ -67,5 +112,49 @@ mod tests {
         let new_user = create_user(&pool, new_user)
             .await
             .expect("error creating new user");
+
+        let existing_user = get_user_by_email(
+            &pool,
+            GetUserByEmail {
+                email: "jennycho35@gmail.com".to_owned(),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(existing_user.is_some());
+        assert_eq!(existing_user.unwrap().id.to_string(), new_user);
+
+        let by_id = get_user_by_id(
+            &pool,
+            GetUserById {
+                id: new_user.clone(),
+            },
+        )
+        .await
+        .expect("error getting user by id");
+
+        assert!(by_id.is_some());
+        assert_eq!(by_id.unwrap().id.to_string(), new_user.clone());
+
+        delete_user(
+            &pool,
+            DeleteUser {
+                id: new_user.clone(),
+            },
+        )
+        .await
+        .expect("error deleting user");
+
+        nonexistent = get_user_by_id(
+            &pool,
+            GetUserById {
+                id: new_user.clone(),
+            },
+        )
+        .await
+        .expect("error fetching user by id");
+
+        assert!(nonexistent.is_none());
     }
 }

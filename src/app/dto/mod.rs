@@ -10,4 +10,4 @@ pub use posts::{
     GetSpaceById,
 };
 pub use types::HashAlgorithm;
-pub use users::CreateUser;
+pub use users::{CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById};
