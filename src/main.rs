@@ -1,5 +1,6 @@
 use actix_web::{middleware::Logger, web, App, HttpServer};
-use app::{routes, state::AppState};
+use actix_web_httpauth::middleware::HttpAuthentication;
+use app::{guards, routes, state::AppState};
 
 mod app;
 
@@ -12,8 +13,11 @@ async fn main() -> std::io::Result<()> {
     let state = web::Data::new(AppState::new("milkandmocha").await);
 
     HttpServer::new(move || {
+        let auth = HttpAuthentication::bearer(guards::auth_guard);
+
         App::new()
             .wrap(Logger::default())
+            .wrap(auth)
             .app_data(state.clone())
             .service(web::scope("/api").configure(routes::config))
     })

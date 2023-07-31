@@ -3,10 +3,10 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::error::Error;
 
-static ISS: &str = "milkandmocha";
-static AUD: &str = "milkandmocha";
-static ACCESS_TOKEN_LIFETIME: usize = 60 * 2;
-static REFRESH_TOKEN_LIFETIME: usize = 60 * 60 * 24 * 30 * 3;
+pub static ISS: &str = "milkandmocha";
+pub static AUD: &str = "milkandmocha";
+pub static ACCESS_TOKEN_LIFETIME: usize = 60 * 2;
+pub static REFRESH_TOKEN_LIFETIME: usize = 60 * 60 * 24 * 30 * 3;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -85,7 +85,6 @@ mod tests {
         let signed = claims.sign_rs256().unwrap();
 
         println!("{signed}");
-
         let verified_header = verify_rs256(&signed).unwrap().header;
         println!("{:#?}", verified_header);
 

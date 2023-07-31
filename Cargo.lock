@@ -20,6 +20,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-grants-proc-macro"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c278a8d315dd00c434ad65ec14d3416cacb26d16961af8a1d7a19568071e4f32"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "actix-http"
 version = "3.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -181,6 +192,31 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "actix-web-grants"
+version = "3.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e03865e96db7fc34438d3f4aa330f81f537652f58f8b3728ddc623038055274"
+dependencies = [
+ "actix-grants-proc-macro",
+ "actix-web",
+]
+
+[[package]]
+name = "actix-web-httpauth"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6dda62cf04bc3a9ad2ea8f314f721951cfdb4cdacec4e984d20e77c7bb170991"
+dependencies = [
+ "actix-utils",
+ "actix-web",
+ "base64 0.13.1",
+ "futures-core",
+ "futures-util",
+ "log",
+ "pin-project-lite",
 ]
 
 [[package]]
@@ -1271,6 +1307,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "mocha"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "actix-web-grants",
+ "actix-web-httpauth",
+ "async-trait",
+ "bcrypt",
+ "chrono",
+ "dotenvy",
+ "env_logger",
+ "jsonwebtoken",
+ "openssl",
+ "pbkdf2",
+ "rand",
+ "rsa",
+ "rust-argon2",
+ "scrypt",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sqlx",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "nom"
 version = "7.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1813,31 +1876,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.27",
-]
-
-[[package]]
-name = "server"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "async-trait",
- "bcrypt",
- "chrono",
- "dotenvy",
- "env_logger",
- "jsonwebtoken",
- "openssl",
- "pbkdf2",
- "rand",
- "rsa",
- "rust-argon2",
- "scrypt",
- "serde",
- "serde_json",
- "serde_with",
- "sqlx",
- "tokio",
- "uuid",
 ]
 
 [[package]]
