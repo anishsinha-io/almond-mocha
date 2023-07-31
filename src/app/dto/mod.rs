@@ -1,8 +1,6 @@
-mod auth;
 mod pagination;
 mod posts;
 mod sessions;
-mod traits;
 mod types;
 mod users;
 
@@ -14,4 +12,6 @@ pub use posts::{
 pub use types::HashAlgorithm;
 pub use users::{CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById};
 
-pub use traits::SessionInterface;
+pub use sessions::{
+    CreateSession, DeleteSession, EditSession, GetSessionById, GetSessionsByUserId,
+};

@@ -1,3 +1,5 @@
+pub mod jwt;
+
 use crate::app::dto::HashAlgorithm;
 use argon2::{self, Config};
 use rand::Rng;

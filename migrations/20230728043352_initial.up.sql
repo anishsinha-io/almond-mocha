@@ -1,15 +1,13 @@
+begin;
 --
 -- create schema
 create schema if not exists jen;
-
 --
 -- search path
 set search_path to jen;
-
 --
 -- create uuid extension
 create extension if not exists "uuid-ossp";
-
 --
 -- update timestamp function
 create or replace function update_timestamp()
@@ -21,14 +19,12 @@ begin
 end;
 $$
 language plpgsql;
-
 --
 -- hash algorithms type
 create type hash_algorithm as enum(
   'argon2',
   'bcrypt'
 );
-
 --
 -- users table
 create table if not exists users(
@@ -42,11 +38,9 @@ create table if not exists users(
   updated_at timestamptz not null default current_timestamp,
   unique (email)
 );
-
 create or replace trigger update_users_timestamp
   before update on users for each row
   execute function update_timestamp();
-
 --
 -- user_credentials table
 create table if not exists user_credentials(
@@ -57,11 +51,9 @@ create table if not exists user_credentials(
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp
 );
-
 create or replace trigger update_user_credentials_timestamp
   before update on user_credentials for each row
   execute function update_timestamp();
-
 create table if not exists spaces(
   id uuid not null default uuid_generate_v4() primary key,
   space_name text not null,
@@ -70,11 +62,9 @@ create table if not exists spaces(
   updated_at timestamptz not null default current_timestamp,
   unique (space_name)
 );
-
 create or replace trigger update_spaces_timestamp
   before update on spaces for each row
   execute function update_timestamp();
-
 --
 -- posts table
 create table if not exists posts(
@@ -87,11 +77,9 @@ create table if not exists posts(
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp
 );
-
 create or replace trigger update_posts_timestamp
   before update on posts for each row
   execute function update_timestamp();
-
 --
 -- tags table
 create table if not exists tags(
@@ -102,11 +90,9 @@ create table if not exists tags(
   updated_at timestamptz not null default current_timestamp,
   unique (tag_name)
 );
-
 create or replace trigger update_tags_timestamp
   before update on tags for each row
   execute function update_timestamp();
-
 --
 -- post_tags table
 create table if not exists post_tags(
@@ -116,8 +102,20 @@ create table if not exists post_tags(
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp
 );
-
 create or replace trigger update_post_tags_timestamp
   before update on post_tags for each row
   execute function update_timestamp();
+--
+-- sessions table
+create table if not exists sessions(
+  id uuid not null default uuid_generate_v4() primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  session_state text not null,
+  created_at timestamptz not null default current_timestamp,
+  updated_at timestamptz not null default current_timestamp
+);
+create or replace trigger update_sessions_timestamp
+  before update on sessions for each row
+  execute function update_timestamp();
+commit;
 
