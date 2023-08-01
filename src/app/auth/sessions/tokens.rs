@@ -106,14 +106,12 @@ mod tests {
             nbf,
         };
 
-        let signed = claims.sign_rs256().unwrap();
+        let _signed = claims.sign_rs256().unwrap();
 
-        println!("{signed}");
-        let verified_header = verify_rs256(&signed).unwrap().header;
-        println!("{:#?}", verified_header);
-
-        let verified_claims = verify_rs256(&signed).unwrap().claims;
-
-        println!("{:#?}", verified_claims);
+        // println!("{signed}");
+        let _verified_header = verify_rs256(&_signed).unwrap().header;
+        // println!("{:#?}", _verified_header);
+        let _verified_claims = verify_rs256(&_signed).unwrap().claims;
+        // println!("{:#?}", _verified_claims);
     }
 }

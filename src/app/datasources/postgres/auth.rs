@@ -15,5 +15,5 @@ pub async fn start_session(
         data.session_state
     ).fetch_one(pool).await?;
 
-    Ok(session.session_state.to_owned())
+    Ok(session.session_state)
 }

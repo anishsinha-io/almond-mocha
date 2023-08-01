@@ -8,7 +8,7 @@ pub struct RegisterUser {
     pub email: String,
     pub username: String,
     pub image_uri: String,
-    pub plaintext_password: Option<String>,
+    pub password: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

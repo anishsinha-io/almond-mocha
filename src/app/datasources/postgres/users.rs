@@ -59,7 +59,7 @@ pub async fn get_user_with_credentials_by_email(
         r#"select users.id, first_name, last_name, email, username, image_uri, 
            jen.user_credentials.credential_hash, jen.user_credentials.alg as "alg!: HashAlgorithm", 
            users.created_at, users.updated_at from jen.users join jen.user_credentials 
-           on jen.users.id=jen.user_credentials.user_id and email=$1"#,
+           on users.id=user_credentials.user_id and email=$1"#,
         data.email
     )
     .fetch_optional(pool)

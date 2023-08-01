@@ -29,3 +29,8 @@ pub struct DeleteSession {
     pub user_id: String,
     pub session_state: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeleteUserSessions {
+    pub user_id: String,
+}

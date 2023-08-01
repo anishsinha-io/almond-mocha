@@ -1,7 +1,7 @@
 use actix_web::{
     cookie::Cookie,
     web::{Data, Json},
-    HttpRequest, HttpResponse,
+    HttpMessage, HttpRequest, HttpResponse,
 };
 use uuid::Uuid;
 
@@ -13,7 +13,7 @@ use crate::app::{
     state::AppState,
 };
 
-use super::tokens::{verify_rs256, Claims};
+use super::tokens::Claims;
 
 pub async fn register(
     state: Data<AppState>,
@@ -38,7 +38,7 @@ pub async fn register(
         algorithm: None,
     };
 
-    if let Some(plaintext) = raw_data.plaintext_password {
+    if let Some(plaintext) = raw_data.password {
         let hashed_password = state
             .manager
             .create_hash(plaintext.as_bytes())
@@ -126,4 +126,6 @@ pub async fn login(
     }
 }
 
-pub async fn logout() {}
+pub async fn logout(req: HttpRequest, state: Data<AppState>) {
+    let claims = req.extensions().get::<Claims>();
+}

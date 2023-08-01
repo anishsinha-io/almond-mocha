@@ -14,7 +14,8 @@ pub use types::HashAlgorithm;
 pub use users::{CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById};
 
 pub use sessions::{
-    CreateSession, DeleteSession, EditSession, GetSessionById, GetSessionsByUserId,
+    CreateSession, DeleteSession, DeleteUserSessions, EditSession, GetSessionById,
+    GetSessionsByUserId,
 };
 
 pub use auth::{LoginUser, RegisterUser};
