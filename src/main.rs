@@ -13,7 +13,7 @@ async fn main() -> std::io::Result<()> {
     let state = web::Data::new(AppState::new("milkandmocha").await);
 
     HttpServer::new(move || {
-        let auth = HttpAuthentication::bearer(guards::auth_guard);
+        let auth = HttpAuthentication::bearer(guards::jwt_guard);
 
         App::new()
             .wrap(Logger::default())

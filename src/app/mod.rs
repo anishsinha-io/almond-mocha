@@ -2,6 +2,8 @@ mod auth;
 pub mod controllers;
 mod datasources;
 mod dto;
+mod errors;
+mod launch;
 mod pagination;
 mod posts;
 pub mod routes;

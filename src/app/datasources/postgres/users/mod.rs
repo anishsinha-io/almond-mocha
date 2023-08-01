@@ -99,7 +99,7 @@ mod tests {
     #[tokio::test]
     pub async fn test_users() {
         initialize();
-        let pool = create_pool(5).await;
+        let pool = create_pool(5).await.unwrap();
 
         let mut nonexistent = get_user_by_email(
             &pool,

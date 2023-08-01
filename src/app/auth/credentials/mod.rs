@@ -3,14 +3,11 @@ pub mod jwt;
 use crate::app::dto::HashAlgorithm;
 use argon2::{self, Config};
 use rand::Rng;
-use scrypt::{
-    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
-    Scrypt,
-};
+use std::env;
 use std::error::Error;
 
 pub struct CredentialManager {
-    algorithm: HashAlgorithm,
+    pub algorithm: HashAlgorithm,
 }
 
 impl CredentialManager {
@@ -19,9 +16,15 @@ impl CredentialManager {
     }
 
     pub fn default() -> Self {
-        Self {
-            algorithm: HashAlgorithm::Argon2,
-        }
+        let algorithm = match env::var("HASH_ALGORITHM")
+            .unwrap_or("unset".to_owned())
+            .as_str()
+        {
+            "bcrypt" => HashAlgorithm::Bcrypt,
+            _ => HashAlgorithm::Argon2,
+        };
+
+        Self { algorithm }
     }
 
     fn gen_random_bytes(&self) -> [u8; 16] {
@@ -41,13 +44,6 @@ impl CredentialManager {
         Ok(hash_result.to_string())
     }
 
-    // TODO: Deprecate
-    fn hash_scrypt(&self, candidate: &[u8]) -> Result<String, Box<dyn Error + Send + Sync>> {
-        let salt = SaltString::generate(&mut OsRng);
-        let password_hash = Scrypt.hash_password(candidate, &salt)?.to_string();
-        Ok(password_hash)
-    }
-
     pub fn create_hash(&self, candidate: &[u8]) -> Result<String, Box<dyn Error + Send + Sync>> {
         match self.algorithm {
             HashAlgorithm::Argon2 => self.hash_argon2(candidate),
@@ -56,8 +52,6 @@ impl CredentialManager {
     }
 
     pub fn verify_hash(&self, candidate: &str, hash: &str) -> bool {
-        use scrypt::password_hash::{PasswordHash, PasswordVerifier};
-
         match self.algorithm {
             HashAlgorithm::Argon2 => {
                 argon2::verify_encoded(hash, candidate.as_bytes()).unwrap_or(false)

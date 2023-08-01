@@ -1316,6 +1316,7 @@ dependencies = [
  "async-trait",
  "bcrypt",
  "chrono",
+ "derive_more",
  "dotenvy",
  "env_logger",
  "jsonwebtoken",

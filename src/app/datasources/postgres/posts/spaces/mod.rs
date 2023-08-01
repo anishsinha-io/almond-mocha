@@ -89,7 +89,7 @@ mod tests {
     #[tokio::test]
     pub async fn test_spaces() {
         initialize();
-        let pool = create_pool(5).await;
+        let pool = create_pool(5).await.unwrap();
 
         let data = CreateSpace {
             space_name: "Computer Science".to_owned(),

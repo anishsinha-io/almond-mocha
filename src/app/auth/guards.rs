@@ -5,7 +5,9 @@ use actix_web_httpauth::extractors::bearer::BearerAuth;
 
 use super::tokens::{self, Claims};
 
-pub async fn auth_guard(
+pub async fn session_guard(req: ServiceRequest) {}
+
+pub async fn jwt_guard(
     req: ServiceRequest,
     credentials: BearerAuth,
 ) -> Result<ServiceRequest, (actix_web::error::Error, ServiceRequest)> {

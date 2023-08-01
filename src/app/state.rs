@@ -1,24 +1,38 @@
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use sqlx::{Pool, Postgres};
 use std::env;
+
+use super::{auth::CredentialManager, datasources::postgres, launch::LaunchMode};
 
 pub struct AppState {
     pub name: String,
     pub pool: Pool<Postgres>,
+    pub manager: CredentialManager,
+    pub launch_mode: LaunchMode,
 }
 
 impl AppState {
     pub async fn new(name: &str) -> Self {
-        let db_url = env::var("DATABASE_URL").expect("error loading database url");
+        let launch_mode = match env::var("LAUNCH_MODE")
+            .expect("LAUNCH_MODE environment variable is not set")
+            .as_str()
+        {
+            "development" => LaunchMode::Development,
+            "testing" => LaunchMode::Testing,
+            "staging" => LaunchMode::Staging,
+            _ => LaunchMode::Production,
+        };
 
-        let pool = PgPoolOptions::new()
-            .max_connections(100)
-            .connect(&db_url)
+        let pool = postgres::create_pool(100)
             .await
-            .expect("error creating database connection pool");
+            .expect("error creating postgresql connection pool");
+
+        let manager = CredentialManager::default();
 
         Self {
             name: name.to_owned(),
             pool,
+            manager,
+            launch_mode,
         }
     }
 }
