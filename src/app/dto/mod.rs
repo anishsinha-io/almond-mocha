@@ -15,7 +15,7 @@ pub use users::{CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById};
 
 pub use sessions::{
     CreateSession, DeleteSession, DeleteUserSessions, EditSession, GetSessionById,
-    GetSessionsByUserId,
+    GetSessionsByUserId, UpdateSessionState,
 };
 
 pub use auth::{LoginUser, RegisterUser};

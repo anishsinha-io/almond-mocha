@@ -34,3 +34,9 @@ pub struct DeleteSession {
 pub struct DeleteUserSessions {
     pub user_id: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateSessionState {
+    pub id: String,
+    pub session_state: String,
+}
