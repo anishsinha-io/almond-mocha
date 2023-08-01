@@ -1,8 +1,10 @@
 use sqlx::{types::Uuid, Pool, Postgres, Transaction};
 use std::error::Error;
 
-use crate::app::datasources::entities::User;
-use crate::app::dto::{CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById};
+use crate::app::datasources::entities::{User, UserWithCredentials};
+use crate::app::dto::{
+    CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById, HashAlgorithm,
+};
 
 pub async fn create_user(
     pool: &Pool<Postgres>,
@@ -45,6 +47,23 @@ pub async fn get_user_by_email(
     data: GetUserByEmail,
 ) -> Result<Option<User>, Box<dyn Error + Send + Sync>> {
     let user = sqlx::query_as!(User, r#"select id, first_name, last_name, email, username, image_uri, created_at, updated_at from jen.users where email=$1"#, data.email).fetch_optional(pool).await?;
+    Ok(user)
+}
+
+pub async fn get_user_with_credentials_by_email(
+    pool: &Pool<Postgres>,
+    data: GetUserByEmail,
+) -> Result<Option<UserWithCredentials>, Box<dyn Error + Send + Sync>> {
+    let user = sqlx::query_as!(
+        UserWithCredentials,
+        r#"select users.id, first_name, last_name, email, username, image_uri, 
+           jen.user_credentials.credential_hash, jen.user_credentials.alg as "alg!: HashAlgorithm", 
+           users.created_at, users.updated_at from jen.users join jen.user_credentials 
+           on jen.users.id=jen.user_credentials.user_id and email=$1"#,
+        data.email
+    )
+    .fetch_optional(pool)
+    .await?;
     Ok(user)
 }
 

@@ -13,8 +13,10 @@ pub enum AppError {
     Unauthorized,
     #[display(fmt = "forbidden")]
     Forbidden,
+    #[display(fmt = "not found")]
+    NotFound,
     #[display(fmt = "internal server error")]
-    InternalServer,
+    InternalServerError,
 }
 
 impl actix_web::error::ResponseError for AppError {
@@ -23,7 +25,8 @@ impl actix_web::error::ResponseError for AppError {
             AppError::BadRequest => StatusCode::BAD_REQUEST,
             AppError::Unauthorized => StatusCode::UNAUTHORIZED,
             AppError::Forbidden => StatusCode::FORBIDDEN,
-            AppError::InternalServer => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::NotFound => StatusCode::NOT_FOUND,
+            AppError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 

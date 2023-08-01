@@ -17,4 +17,4 @@ pub use sessions::{
     CreateSession, DeleteSession, EditSession, GetSessionById, GetSessionsByUserId,
 };
 
-pub use auth::{LoginUser, RegisterUser, StartSession};
+pub use auth::{LoginUser, RegisterUser};

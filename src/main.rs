@@ -13,11 +13,11 @@ async fn main() -> std::io::Result<()> {
     let state = web::Data::new(AppState::new("milkandmocha").await);
 
     HttpServer::new(move || {
-        let auth = HttpAuthentication::bearer(guards::jwt_guard);
+        // let auth = HttpAuthentication::bearer(guards::jwt_guard);
 
         App::new()
             .wrap(Logger::default())
-            .wrap(auth)
+            // .wrap(auth)
             .app_data(state.clone())
             .service(web::scope("/api").configure(routes::config))
     })

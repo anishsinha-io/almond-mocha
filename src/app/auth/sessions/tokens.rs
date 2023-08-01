@@ -2,6 +2,8 @@ use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, TokenData, Valid
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::error::Error;
+use std::time::{SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
 
 pub static ISS: &str = "milkandmocha";
 pub static AUD: &str = "milkandmocha";
@@ -28,6 +30,28 @@ impl Claims {
             &EncodingKey::from_rsa_pem(private_key.as_bytes())?,
         )?;
         Ok(token)
+    }
+
+    pub fn default(sub: &str) -> Self {
+        let jti = Uuid::new_v4().to_string();
+
+        let iat = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as usize;
+
+        let nbf = iat;
+        let exp = iat + ACCESS_TOKEN_LIFETIME;
+
+        Claims {
+            sub: sub.to_owned(),
+            iss: ISS.to_owned(),
+            aud: AUD.to_owned(),
+            jti,
+            iat,
+            nbf,
+            exp,
+        }
     }
 }
 

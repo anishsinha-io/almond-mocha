@@ -28,6 +28,6 @@ pub struct UserWithCredentials {
     pub image_uri: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub hash: String,
-    pub algorithm: HashAlgorithm,
+    pub credential_hash: String,
+    pub alg: HashAlgorithm,
 }
