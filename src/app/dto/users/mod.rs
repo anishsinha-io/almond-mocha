@@ -14,17 +14,6 @@ pub struct GetUserByEmail {
 
 #[serde_with::skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize)]
-pub struct NewUserData {
-    pub first_name: String,
-    pub last_name: String,
-    pub email: String,
-    pub username: String,
-    pub image_uri: String,
-    pub plaintext_password: Option<String>,
-}
-
-#[serde_with::skip_serializing_none]
-#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateUser {
     pub first_name: String,
     pub last_name: String,

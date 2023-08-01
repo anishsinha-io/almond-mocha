@@ -1,3 +1,4 @@
+mod auth;
 mod pagination;
 mod posts;
 mod sessions;
@@ -10,8 +11,10 @@ pub use posts::{
     GetSpaceById,
 };
 pub use types::HashAlgorithm;
-pub use users::{CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById, NewUserData};
+pub use users::{CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById};
 
 pub use sessions::{
     CreateSession, DeleteSession, EditSession, GetSessionById, GetSessionsByUserId,
 };
+
+pub use auth::{LoginUser, RegisterUser, StartSession};

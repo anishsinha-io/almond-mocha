@@ -14,7 +14,6 @@ pub struct GetSessionsByUserId {
 pub struct CreateSession {
     pub user_id: String,
     pub session_state: String,
-    pub expires_at: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
