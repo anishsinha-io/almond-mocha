@@ -110,7 +110,7 @@ create or replace trigger update_post_tags_timestamp
 create table if not exists sessions(
   id uuid not null default uuid_generate_v4() primary key,
   user_id uuid not null references users(id) on delete cascade,
-  session_state text not null,
+  data jsonb not null,
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp
 );

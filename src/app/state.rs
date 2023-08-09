@@ -1,12 +1,17 @@
 use sqlx::{Pool, Postgres};
 use std::env;
 
-use super::{auth::CredentialManager, datasources::postgres, launch::LaunchMode};
+use super::{
+    auth::{sessions::SessionManager, CredentialManager},
+    datasources::postgres,
+    launch::LaunchMode,
+};
 
 pub struct AppState {
     pub name: String,
     pub pool: Pool<Postgres>,
-    pub manager: CredentialManager,
+    pub credential_manager: CredentialManager,
+    pub session_manager: SessionManager,
     pub launch_mode: LaunchMode,
 }
 
@@ -26,12 +31,14 @@ impl AppState {
             .await
             .expect("error creating postgresql connection pool");
 
-        let manager = CredentialManager::default();
+        let credential_manager = CredentialManager::default();
+        let session_manager = SessionManager::default();
 
         Self {
             name: name.to_owned(),
             pool,
-            manager,
+            credential_manager,
+            session_manager,
             launch_mode,
         }
     }

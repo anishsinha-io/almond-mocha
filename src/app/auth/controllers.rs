@@ -26,7 +26,7 @@ pub async fn register(
 
     let raw_data = data.into_inner();
 
-    let alg = state.manager.algorithm.clone();
+    let alg = state.credential_manager.algorithm.clone();
 
     let mut dto = CreateUser {
         first_name: raw_data.first_name,
@@ -40,7 +40,7 @@ pub async fn register(
 
     if let Some(plaintext) = raw_data.password {
         let hashed_password = state
-            .manager
+            .credential_manager
             .create_hash(plaintext.as_bytes())
             .map_err(|_| AppError::InternalServerError)?;
         dto.hashed_password = Some(hashed_password);
@@ -53,26 +53,27 @@ pub async fn register(
 
     let new_session_state = format!("A+J_{}", Uuid::new_v4());
 
-    let dto = CreateSession {
-        user_id: new_user_id.clone(),
-        session_state: new_session_state,
-    };
+    // let dto = CreateSession {
+    //     user_id: new_user_id.clone(),
+    //     session_state: new_session_state,
+    // };
 
-    let session_state = postgres::auth::start_session(&state.pool, dto)
-        .await
-        .map_err(|_| AppError::InternalServerError)?;
+    // let session_state = postgres::auth::start_session(&state.pool, dto)
+    //     .await
+    //     .map_err(|_| AppError::InternalServerError)?;
 
-    let access_token = Claims::default(&new_user_id.clone())
-        .sign_rs256()
-        .map_err(|_| AppError::InternalServerError)?;
-
-    let mut res = HttpResponse::Ok().json(
-        serde_json::json!({"msg": "successfully created new user", "access_token": access_token}),
-    );
-
-    res.add_cookie(&Cookie::new("session_state", session_state))
-        .map_err(|_| AppError::InternalServerError)?;
-    Ok(res)
+    // let access_token = Claims::default(&new_user_id.clone())
+    //     .sign_rs256()
+    //     .map_err(|_| AppError::InternalServerError)?;
+    //
+    // let mut res = HttpResponse::Ok().json(
+    //     serde_json::json!({"msg": "successfully created new user", "access_token": access_token}),
+    // );
+    //
+    // res.add_cookie(&Cookie::new("session_state", session_state))
+    //     .map_err(|_| AppError::InternalServerError)?;
+    // Ok(res)
+    Err(AppError::BadRequest)
 }
 
 pub async fn token(state: Data<AppState>, req: HttpRequest) {}
@@ -95,29 +96,29 @@ pub async fn login(
         Some(user) => {
             let candidate = raw_data.password;
             let hash = user.credential_hash;
-            if state.manager.verify_hash(&candidate, &hash) {
+            if state.credential_manager.verify_hash(&candidate, &hash) {
                 let access_token = Claims::default(&user.id.to_string())
                     .sign_rs256()
                     .map_err(|_| AppError::InternalServerError)?;
 
-                let new_session_state = format!("A+J_{}", Uuid::new_v4());
+                // let new_session_state = format!("A+J_{}", Uuid::new_v4());
 
-                let dto = CreateSession {
-                    user_id: user.id.to_string(),
-                    session_state: new_session_state,
-                };
+                // let dto = CreateSession {
+                //     user_id: user.id.to_string(),
+                //     session_state: new_session_state,
+                // };
+                //
+                // let session_state = postgres::auth::start_session(&state.pool, dto)
+                //     .await
+                //     .map_err(|_| AppError::InternalServerError)?;
+                //
+                // let mut res = HttpResponse::Ok().json(
+                //     serde_json::json!({"msg":"successfully logged in", "access_token": access_token}),
+                // );
+                // res.add_cookie(&Cookie::new("session_state", session_state))
+                //     .map_err(|_| AppError::InternalServerError)?;
 
-                let session_state = postgres::auth::start_session(&state.pool, dto)
-                    .await
-                    .map_err(|_| AppError::InternalServerError)?;
-
-                let mut res = HttpResponse::Ok().json(
-                    serde_json::json!({"msg":"successfully logged in", "access_token": access_token}),
-                );
-                res.add_cookie(&Cookie::new("session_state", session_state))
-                    .map_err(|_| AppError::InternalServerError)?;
-
-                Ok(res)
+                Err(AppError::BadRequest)
             } else {
                 Err(AppError::Unauthorized)
             }

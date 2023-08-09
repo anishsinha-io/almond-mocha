@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[serde_with::skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize)]
@@ -15,4 +16,44 @@ pub struct RegisterUser {
 pub struct LoginUser {
     pub email: String,
     pub password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetSessionById {
+    pub id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetSessionsByUserId {
+    pub user_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateSession {
+    pub user_id: String,
+    pub data: Value,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EditSession {
+    pub id: String,
+    pub session_state: String,
+    pub expires_at: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeleteSession {
+    pub id: String,
+    pub user_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeleteUserSessions {
+    pub user_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateSessionState {
+    pub id: String,
+    pub session_state: String,
 }

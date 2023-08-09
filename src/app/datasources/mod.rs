@@ -1,6 +1,6 @@
 mod entities;
 pub mod postgres;
-mod redis;
+pub mod redis;
 
 pub use postgres::auth;
 pub use postgres::posts;

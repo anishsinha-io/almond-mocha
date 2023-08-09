@@ -3,7 +3,7 @@ version: "3.8"
 services:
   postgres:
     hostname: postgres
-    container_name: postgres
+    container_name: jen-postgres
     image: postgres
     environment:
       POSTGRES_USER: postgres
@@ -23,15 +23,17 @@ services:
     hostname: pgadmin
     depends_on:
       - postgres
-  # mocha:
-  #   hostname: mocha
-  #   container_name: mocha
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.dev
-  #   ports:
-  #     - "8888:8888"
-  #   volumes:
-  #     - .:/app
-  #   depends_on:
-  #     - postgres
+  redis:
+    hostname: redis
+    container_name: jen-redis
+    image: redis
+    ports:
+      - "6379:6379"
+  redis-insight:
+    hostname: redis-ui
+    container_name: jen-redis-ui
+    image: redislabs/redisinsight
+    ports:
+      - "8001:8001"
+    depends_on:
+      - redis
