@@ -3,13 +3,17 @@ use std::env;
 
 use super::{
     auth::{sessions::SessionManager, CredentialManager},
-    datasources::postgres,
+    datasources::{
+        postgres,
+        redis::{self, RedisPool},
+    },
     launch::LaunchMode,
 };
 
 pub struct AppState {
     pub name: String,
     pub pool: Pool<Postgres>,
+    pub cache: RedisPool,
     pub credential_manager: CredentialManager,
     pub session_manager: SessionManager,
     pub launch_mode: LaunchMode,
@@ -34,9 +38,14 @@ impl AppState {
         let credential_manager = CredentialManager::default();
         let session_manager = SessionManager::default();
 
+        let cache = redis::create_pool()
+            .await
+            .expect("error creating redis pool");
+
         Self {
             name: name.to_owned(),
             pool,
+            cache,
             credential_manager,
             session_manager,
             launch_mode,
