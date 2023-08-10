@@ -10,7 +10,9 @@ async fn main() -> std::io::Result<()> {
 
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    let state = web::Data::new(AppState::new("milkandmocha").await);
+    let state = web::Data::new(AppState::new("mocha").await);
+
+    log::info!("brewing mocha with almond milk...");
 
     HttpServer::new(move || {
         // let auth = HttpAuthentication::bearer(guards::jwt_guard);

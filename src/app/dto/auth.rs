@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -32,6 +33,8 @@ pub struct GetSessionsByUserId {
 pub struct CreateSession {
     pub user_id: String,
     pub data: Value,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -44,7 +47,6 @@ pub struct EditSession {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeleteSession {
     pub id: String,
-    pub user_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

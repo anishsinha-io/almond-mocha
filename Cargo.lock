@@ -1402,6 +1402,7 @@ dependencies = [
  "dotenvy",
  "env_logger",
  "jsonwebtoken",
+ "log",
  "mobc",
  "mobc-redis",
  "openssl",

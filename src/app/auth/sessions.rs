@@ -1,4 +1,11 @@
-use crate::app::dto::{CreateSession, DeleteSession};
+use crate::app::{
+    config::{Config, StorageLayer},
+    datasources::{
+        postgres,
+        redis::{self, RedisConn},
+    },
+    dto::{CreateSession, DeleteSession},
+};
 use derive_more::Display;
 use sqlx::{Pool, Postgres};
 use std::error::Error;
@@ -27,56 +34,43 @@ impl SessionManager {
         Self { interface }
     }
 
-    pub fn create_signed_cookie() {}
-
-    async fn start_session_postgres(
-        &self,
-        pool: &Pool<Postgres>,
-        data: CreateSession,
-    ) -> Result<String, Box<dyn Error + Send + Sync>> {
-        let query = "insert into jen.sessions (user_id, data) values ($1, $2) returning id";
-
-        let session: (Uuid,) = sqlx::query_as(query)
-            .bind(&data.user_id)
-            .bind(&data.data)
-            .fetch_one(pool)
-            .await?;
-
-        Ok(session.0.to_string())
-    }
-
-    async fn end_session_postgres(
-        &self,
-        pool: &Pool<Postgres>,
-        data: DeleteSession,
-    ) -> Result<(), Box<dyn Error + Send + Sync>> {
-        sqlx::query("delete from jen.sessions where id=$1 and user_id=$2")
-            .bind(data.id)
-            .bind(data.user_id)
-            .execute(pool)
-            .await?;
-        Ok(())
-    }
-
-    fn start_session_redis() {}
+    pub fn create_signed_cookie(config: Config) {}
 
     pub async fn start_session(
         &self,
-        pool: &Pool<Postgres>,
+        storage_layer: &StorageLayer,
         data: CreateSession,
     ) -> Result<String, Box<dyn Error + Send + Sync>> {
         match self.interface {
-            SessionInterface::Postgres => self.start_session_postgres(pool, data).await,
-            SessionInterface::Redis => todo!(),
+            SessionInterface::Postgres => {
+                let pool = &storage_layer.pg;
+                let id = postgres::auth::start_session(pool, data).await?;
+                Ok(id)
+            }
+            SessionInterface::Redis => {
+                let mut conn = storage_layer.redis.get().await?;
+                let id = redis::auth::start_session(&mut conn, data).await?;
+                Ok(id)
+            }
         }
     }
 
-    fn end_session_redis() {}
-
-    pub fn end_session(&self) {
+    pub async fn end_session(
+        &self,
+        storage_layer: &StorageLayer,
+        data: DeleteSession,
+    ) -> Result<(), Box<dyn Error + Send + Sync>> {
         match self.interface {
-            SessionInterface::Postgres => todo!(),
-            SessionInterface::Redis => todo!(),
+            SessionInterface::Postgres => {
+                let pool = &storage_layer.pg;
+                postgres::auth::end_session(pool, data).await?;
+                Ok(())
+            }
+            SessionInterface::Redis => {
+                let mut conn = storage_layer.redis.get().await?;
+                redis::auth::end_session(&mut conn, data).await?;
+                Ok(())
+            }
         }
     }
 }

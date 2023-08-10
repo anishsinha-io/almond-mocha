@@ -12,7 +12,7 @@ pub async fn session_guard(
     state: Data<AppState>,
 ) -> Result<ServiceRequest, (actix_web::error::Error, ServiceRequest)> {
     // if let Some(session_state) = req.cookie("session_state") {}
-    println!("{}", state.name);
+    println!("{}", state.config.name);
     Ok(req)
 }
 

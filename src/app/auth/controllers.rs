@@ -7,26 +7,27 @@ use uuid::Uuid;
 
 use crate::app::{
     datasources::{postgres, users},
-    dto::{CreateSession, CreateUser, GetUserByEmail, LoginUser, RegisterUser},
+    dto::{CreateUser, GetUserByEmail, LoginUser, RegisterUser},
     errors::AppError,
     launch::LaunchMode,
     state::AppState,
 };
 
-use super::tokens::Claims;
+use super::{state::AuthState, tokens::Claims};
 
 pub async fn register(
     state: Data<AppState>,
+    auth_state: Data<AuthState>,
     data: Json<RegisterUser>,
 ) -> actix_web::Result<HttpResponse, AppError> {
     // Do NOT allow registration in production.
-    if state.launch_mode == LaunchMode::Production {
+    if state.config.launch_mode == LaunchMode::Production {
         return Err(AppError::Forbidden);
     };
 
     let raw_data = data.into_inner();
 
-    let alg = state.credential_manager.algorithm.clone();
+    let alg = auth_state.credential_manager.algorithm.clone();
 
     let mut dto = CreateUser {
         first_name: raw_data.first_name,
@@ -39,7 +40,7 @@ pub async fn register(
     };
 
     if let Some(plaintext) = raw_data.password {
-        let hashed_password = state
+        let hashed_password = auth_state
             .credential_manager
             .create_hash(plaintext.as_bytes())
             .map_err(|_| AppError::InternalServerError)?;
@@ -47,7 +48,7 @@ pub async fn register(
         dto.algorithm = Some(alg);
     }
 
-    let new_user_id = users::create_user(&state.pool, dto)
+    let new_user_id = users::create_user(&state.storage_layer.pg, dto)
         .await
         .map_err(|_| AppError::InternalServerError)?;
 
@@ -80,6 +81,7 @@ pub async fn token(state: Data<AppState>, req: HttpRequest) {}
 
 pub async fn login(
     state: Data<AppState>,
+    auth_state: Data<AuthState>,
     data: Json<LoginUser>,
 ) -> actix_web::Result<HttpResponse, AppError> {
     let raw_data = data.into_inner();
@@ -89,14 +91,14 @@ pub async fn login(
     };
 
     // match
-    match postgres::users::get_user_with_credentials_by_email(&state.pool, dto)
+    match postgres::users::get_user_with_credentials_by_email(&state.storage_layer.pg, dto)
         .await
         .map_err(|_| AppError::InternalServerError)?
     {
         Some(user) => {
             let candidate = raw_data.password;
             let hash = user.credential_hash;
-            if state.credential_manager.verify_hash(&candidate, &hash) {
+            if auth_state.credential_manager.verify_hash(&candidate, &hash) {
                 let access_token = Claims::default(&user.id.to_string())
                     .sign_rs256()
                     .map_err(|_| AppError::InternalServerError)?;

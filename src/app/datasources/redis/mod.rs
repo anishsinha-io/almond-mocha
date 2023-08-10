@@ -4,6 +4,9 @@ use mobc_redis::redis::AsyncCommands;
 use mobc_redis::{redis, RedisConnectionManager};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::error::Error;
+use std::time::Duration;
+
+pub mod auth;
 
 pub type RedisPool = Pool<RedisConnectionManager>;
 pub type RedisConn = Connection<RedisConnectionManager>;
@@ -17,7 +20,12 @@ pub async fn create_pool() -> Result<RedisPool, Box<dyn Error + Send + Sync>> {
     let conn_string = env!("REDIS_URL");
     let client = redis::Client::open(conn_string)?;
     let manager = RedisConnectionManager::new(client);
-    let pool = Pool::builder().build(manager);
+    let pool = Pool::builder()
+        .get_timeout(Some(Duration::from_secs(CACHE_POOL_TIMEOUT_SECONDS)))
+        .max_open(CACHE_POOL_MAX_OPEN)
+        .max_idle(CACHE_POOL_MAX_IDLE)
+        .max_lifetime(Some(Duration::from_secs(CACHE_POOL_EXPIRE_SECONDS)))
+        .build(manager);
     Ok(pool)
 }
 
@@ -31,11 +39,7 @@ pub enum CacheError {
     ServerError,
 }
 
-pub async fn set_json<'a, T>(
-    conn: &mut Connection<RedisConnectionManager>,
-    key: &str,
-    value: T,
-) -> Result<(), CacheError>
+pub async fn set_json<'a, T>(conn: &mut RedisConn, key: &str, value: T) -> Result<(), CacheError>
 where
     T: Serialize + Deserialize<'a>,
 {
@@ -50,23 +54,21 @@ where
     Ok(())
 }
 
-pub async fn retrieve_json<'a, T>(
-    conn: &mut Connection<RedisConnectionManager>,
-    key: &str,
-) -> Result<Option<T>, CacheError>
+pub async fn get_json<'a, T>(conn: &mut RedisConn, key: &str) -> Result<Option<T>, CacheError>
 where
     T: Serialize + DeserializeOwned,
 {
-    let json: Option<String> = conn.get(key).await.map_err(|_| CacheError::Miss)?;
+    let json: Option<String> = conn.get(key).await.map_err(|_| CacheError::ServerError)?;
     match json {
         Some(value) => {
-            let s: T = serde_json::from_str(&value).map_err(|_| CacheError::ServerError)?;
+            let s: T = serde_json::from_str(&value).map_err(|_| CacheError::Miss)?;
             Ok(Some(s))
         }
         None => Ok(None),
     }
 }
 
+#[inline]
 pub async fn delete(
     conn: &mut Connection<RedisConnectionManager>,
     key: &str,
@@ -104,7 +106,7 @@ mod tests {
             .await
             .expect("error inserting value");
 
-        let v1: TestStruct = retrieve_json(&mut conn, "test")
+        let v1: TestStruct = get_json(&mut conn, "test")
             .await
             .expect("error retrieving value")
             .unwrap();
@@ -119,7 +121,7 @@ mod tests {
         .await
         .expect("error inserting hashmap");
 
-        let v2: HashMap<String, String> = retrieve_json(&mut conn, "key1")
+        let v2: HashMap<String, String> = get_json(&mut conn, "key1")
             .await
             .expect("error retrieving value")
             .unwrap();
@@ -130,7 +132,7 @@ mod tests {
             .await
             .expect("error inserting float vector");
 
-        let v3: Vec<f64> = retrieve_json(&mut conn, "key2")
+        let v3: Vec<f64> = get_json(&mut conn, "key2")
             .await
             .expect("error retrieving value")
             .unwrap();

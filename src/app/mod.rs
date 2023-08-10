@@ -1,4 +1,5 @@
 mod auth;
+mod config;
 pub mod controllers;
 mod datasources;
 mod dto;
