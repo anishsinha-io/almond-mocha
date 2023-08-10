@@ -1,15 +1,12 @@
 use crate::app::{
-    config::{Config, StorageLayer},
-    datasources::{
-        postgres,
-        redis::{self, RedisConn},
-    },
+    config::StorageLayer,
+    datasources::{postgres, redis},
     dto::{CreateSession, DeleteSession},
 };
 use derive_more::Display;
-use sqlx::{Pool, Postgres};
+use jsonwebtoken::{Algorithm, EncodingKey, Header};
+use std::env;
 use std::error::Error;
-use uuid::Uuid;
 
 #[derive(Debug, Display, PartialEq, Eq)]
 pub enum SessionInterface {
@@ -24,17 +21,25 @@ pub struct SessionManager {
 }
 
 impl SessionManager {
-    pub fn default() -> Self {
-        Self {
-            interface: SessionInterface::Postgres,
-        }
-    }
-
     pub fn new(interface: SessionInterface) -> Self {
         Self { interface }
     }
 
-    pub fn create_signed_cookie(config: Config) {}
+    pub fn create_signed_cookie(
+        &self,
+        session_id: &str,
+    ) -> Result<String, Box<dyn Error + Send + Sync>> {
+        let private_key_raw = env::var("SESSION_SIGNING_KEY").unwrap();
+        let data = serde_json::json!({ "session_id": session_id });
+
+        let session_cookie_data = jsonwebtoken::encode(
+            &Header::new(Algorithm::RS256),
+            &data,
+            &EncodingKey::from_rsa_pem(private_key_raw.as_bytes())?,
+        )?;
+
+        Ok(session_cookie_data)
+    }
 
     pub async fn start_session(
         &self,
