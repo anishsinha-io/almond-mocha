@@ -8,11 +8,11 @@ use actix_web::{
 };
 
 use crate::app::{
-    datasources::{entities::Session, postgres, users},
     dto::{CreateSession, CreateUser, DeleteSession, GetUserByEmail, LoginUser, RegisterUser},
     errors::AppError,
     launch::LaunchMode,
     state::AppState,
+    storage::{entities::Session, postgres, users},
 };
 
 use super::tokens::Claims;

@@ -2,8 +2,8 @@ use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 use crate::app::{
-    datasources::{entities::Session, errors::StorageError},
     dto::{CreateSession, DeleteSession, GetSessionById},
+    storage::{entities::Session, errors::StorageError},
 };
 
 pub async fn start_session(

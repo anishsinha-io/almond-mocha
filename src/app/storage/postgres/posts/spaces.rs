@@ -1,9 +1,9 @@
 use sqlx::{types::Uuid, Pool, Postgres};
 use std::error::Error;
 
-use crate::app::datasources::entities::Space;
 use crate::app::dto::{CreateSpace, DeleteSpace, GetSpaceById, PaginationLimits};
 use crate::app::pagination::PaginationContainer;
+use crate::app::storage::entities::Space;
 
 pub async fn create_space(
     pool: &Pool<Postgres>,
@@ -72,7 +72,7 @@ pub async fn delete_space(
 
 #[cfg(test)]
 mod tests {
-    use crate::app::datasources::postgres::create_pool;
+    use crate::app::storage::postgres::create_pool;
 
     use super::*;
 

@@ -1,6 +1,6 @@
 use crate::app::{
-    datasources::{entities::Session, errors::StorageError},
     dto::{DeleteSession, GetSessionById},
+    storage::{entities::Session, errors::StorageError},
 };
 use uuid::Uuid;
 
@@ -35,8 +35,6 @@ pub async fn get_session(
     let session: Option<CreateSession> = get_json(conn, &data.id)
         .await
         .map_err(|_| StorageError::RedisGetSession)?;
-
-    log::info!("{}", &data.id);
 
     let id = Uuid::parse_str(&data.id).map_err(|e| {
         log::error!("{}", e);

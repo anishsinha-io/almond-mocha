@@ -1,7 +1,7 @@
 use crate::app::{
     config::StorageLayer,
-    datasources::{entities::Session, postgres, redis},
     dto::{CreateSession, DeleteSession, GetSessionById},
+    storage::{entities::Session, postgres, redis},
 };
 use derive_more::Display;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -45,7 +45,6 @@ impl SessionManager {
         storage_layer: &StorageLayer,
         cookie: &str,
     ) -> Result<Session, Box<dyn Error + Send + Sync>> {
-        log::debug!("{cookie}");
         let cookie_data = self.verify_session_signature(cookie)?;
 
         let session_id = cookie_data["session_id"].as_str().unwrap_or("");

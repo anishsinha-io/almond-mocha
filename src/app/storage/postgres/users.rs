@@ -1,10 +1,10 @@
 use sqlx::{types::Uuid, Pool, Postgres, Transaction};
 use std::error::Error;
 
-use crate::app::datasources::entities::{User, UserWithCredentials};
 use crate::app::dto::{
     CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById, HashAlgorithm,
 };
+use crate::app::storage::entities::{User, UserWithCredentials};
 
 pub async fn create_user(
     pool: &Pool<Postgres>,
@@ -99,9 +99,7 @@ pub async fn delete_user(
 
 #[cfg(test)]
 mod tests {
-    use crate::app::{
-        auth::CredentialManager, datasources::postgres::create_pool, dto::HashAlgorithm,
-    };
+    use crate::app::{auth::CredentialManager, dto::HashAlgorithm, storage::postgres::create_pool};
 
     use super::*;
 
