@@ -1,6 +1,5 @@
 use actix_web::{middleware::Logger, web, App, HttpServer};
-use actix_web_httpauth::middleware::HttpAuthentication;
-use app::{guards, routes, state::AppState};
+use app::{routes, state::AppState};
 
 mod app;
 

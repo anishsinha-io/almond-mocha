@@ -1,7 +1,6 @@
 use crate::app::dto::HashAlgorithm;
 use argon2::{self, Config};
 use rand::Rng;
-use std::env;
 use std::error::Error;
 
 pub struct CredentialManager {
@@ -10,18 +9,6 @@ pub struct CredentialManager {
 
 impl CredentialManager {
     pub fn new(algorithm: HashAlgorithm) -> Self {
-        Self { algorithm }
-    }
-
-    pub fn default() -> Self {
-        let algorithm = match env::var("HASH_ALGORITHM")
-            .unwrap_or("unset".to_owned())
-            .as_str()
-        {
-            "bcrypt" => HashAlgorithm::Bcrypt,
-            _ => HashAlgorithm::Argon2,
-        };
-
         Self { algorithm }
     }
 

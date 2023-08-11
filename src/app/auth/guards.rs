@@ -3,6 +3,7 @@ use actix_web::HttpMessage;
 use actix_web::{dev::ServiceRequest, web::Data};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 
+use crate::app::datasources::entities::Session;
 use crate::app::state::AppState;
 
 use super::tokens::{self, Claims};
@@ -22,7 +23,10 @@ pub async fn session_guard(
         .await;
 
     match result {
-        Ok(_) => Ok(req),
+        Ok(session) => {
+            req.extensions_mut().insert::<Session>(session);
+            Ok(req)
+        }
         Err(_) => Err((ErrorUnauthorized("invalid session".to_owned()), req)),
     }
 }

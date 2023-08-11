@@ -131,7 +131,7 @@ mod tests {
 
         assert!(nonexistent.is_none());
 
-        let manager = CredentialManager::default();
+        let manager = CredentialManager::new(HashAlgorithm::Argon2);
         let hash = manager.create_hash(b"jennysinha").unwrap();
 
         let new_user = CreateUser {

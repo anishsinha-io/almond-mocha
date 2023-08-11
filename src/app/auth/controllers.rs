@@ -3,12 +3,12 @@ use actix_web::{
         time::{Duration, OffsetDateTime},
         Cookie,
     },
-    web::{Data, Json},
-    HttpRequest, HttpResponse,
+    web::{Data, Json, ReqData},
+    HttpMessage, HttpRequest, HttpResponse,
 };
 
 use crate::app::{
-    datasources::{postgres, users},
+    datasources::{entities::Session, postgres, users},
     dto::{CreateSession, CreateUser, DeleteSession, GetUserByEmail, LoginUser, RegisterUser},
     errors::AppError,
     launch::LaunchMode,
@@ -206,6 +206,21 @@ pub async fn login(
     }
 }
 
-// pub async fn logout(req: HttpRequest, state: Data<AppState>) {
-//     let claims = req.extensions().get::<Claims>();
-// }
+pub async fn logout(
+    state: Data<AppState>,
+    session: ReqData<Session>,
+) -> actix_web::Result<HttpResponse, AppError> {
+    let dto = DeleteSession {
+        id: session.id.clone().to_string(),
+    };
+    state
+        .session_manager
+        .end_session(&state.storage_layer, dto)
+        .await
+        .map_err(|_| AppError::InternalServerError)?;
+
+    let mut res = HttpResponse::Ok().json(serde_json::json!({"msg": "successfully logged out"}));
+
+    res.del_cookie("mocha_session");
+    Ok(res)
+}

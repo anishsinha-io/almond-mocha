@@ -1,5 +1,5 @@
 use crate::app::{
-    datasources::{entities::Session, errors::StorageError, redis},
+    datasources::{entities::Session, errors::StorageError},
     dto::{DeleteSession, GetSessionById},
 };
 use uuid::Uuid;

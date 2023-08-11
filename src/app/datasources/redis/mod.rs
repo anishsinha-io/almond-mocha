@@ -81,7 +81,6 @@ pub async fn delete(
 mod tests {
     use std::collections::HashMap;
 
-    use mobc_redis::redis::AsyncCommands;
     use serde::{Deserialize, Serialize};
 
     use super::*;
