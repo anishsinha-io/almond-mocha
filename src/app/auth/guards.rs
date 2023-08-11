@@ -10,10 +10,21 @@ use super::tokens::{self, Claims};
 pub async fn session_guard(
     req: ServiceRequest,
     state: Data<AppState>,
-) -> Result<ServiceRequest, (actix_web::error::Error, ServiceRequest)> {
-    // if let Some(session_state) = req.cookie("session_state") {}
-    println!("{}", state.config.name);
-    Ok(req)
+) -> Result<ServiceRequest, (actix_web::Error, ServiceRequest)> {
+    let cookie_value = req
+        .cookie("mocha_session")
+        .map(|cookie| cookie.value().to_owned())
+        .unwrap_or("".to_owned());
+
+    let result = state
+        .session_manager
+        .check_session(&state.storage_layer, &cookie_value)
+        .await;
+
+    match result {
+        Ok(_) => Ok(req),
+        Err(_) => Err((ErrorUnauthorized("invalid session".to_owned()), req)),
+    }
 }
 
 pub async fn jwt_guard(

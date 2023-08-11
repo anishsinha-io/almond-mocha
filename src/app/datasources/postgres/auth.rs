@@ -2,8 +2,8 @@ use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 use crate::app::{
-    datasources::errors::StorageError,
-    dto::{CreateSession, DeleteSession, DeleteUserSessions, UpdateSessionState},
+    datasources::{entities::Session, errors::StorageError},
+    dto::{CreateSession, DeleteSession, GetSessionById},
 };
 
 pub async fn start_session(
@@ -37,6 +37,25 @@ pub async fn end_session(pool: &Pool<Postgres>, data: DeleteSession) -> Result<(
         .await
         .map_err(|_| StorageError::PgEndSession)?;
     Ok(())
+}
+
+pub async fn get_session(
+    pool: &Pool<Postgres>,
+    data: GetSessionById,
+) -> Result<Session, StorageError> {
+    let session_id = Uuid::parse_str(&data.id).map_err(|_| {
+        log::error!("error converting string (session id) to uuid");
+        StorageError::PgEndSession
+    })?;
+    let session = sqlx::query_as!(
+        Session,
+        "select id, user_id, data, created_at, updated_at from jen.sessions where id=$1",
+        session_id
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|_| StorageError::PgGetSession)?;
+    Ok(session)
 }
 
 //

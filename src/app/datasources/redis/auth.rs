@@ -36,7 +36,12 @@ pub async fn get_session(
         .await
         .map_err(|_| StorageError::RedisGetSession)?;
 
-    let id = Uuid::parse_str(&data.id).map_err(|_| StorageError::RedisGetSession)?;
+    log::info!("{}", &data.id);
+
+    let id = Uuid::parse_str(&data.id).map_err(|e| {
+        log::error!("{}", e);
+        StorageError::RedisGetSession
+    })?;
 
     match session {
         Some(s) => Ok(Session {

@@ -1,7 +1,7 @@
 use actix_web::{
     cookie::Cookie,
     web::{Data, Json},
-    HttpResponse,
+    HttpRequest, HttpResponse,
 };
 
 use crate::app::{
@@ -16,7 +16,6 @@ use super::{state::AuthState, tokens::Claims};
 
 pub async fn register(
     state: Data<AppState>,
-    auth_state: Data<AuthState>,
     data: Json<RegisterUser>,
 ) -> actix_web::Result<HttpResponse, AppError> {
     // Do NOT allow registration in production.
@@ -27,7 +26,7 @@ pub async fn register(
 
     let raw_data = data.into_inner();
 
-    let alg = auth_state.credential_manager.algorithm.clone();
+    let alg = state.credential_manager.algorithm.clone();
 
     let mut dto = CreateUser {
         first_name: raw_data.first_name,
@@ -40,7 +39,7 @@ pub async fn register(
     };
 
     if let Some(plaintext) = raw_data.password {
-        let hashed_password = auth_state
+        let hashed_password = state
             .credential_manager
             .create_hash(plaintext.as_bytes())
             .map_err(|_| AppError::InternalServerError)?;
@@ -52,7 +51,7 @@ pub async fn register(
         .await
         .map_err(|_| AppError::InternalServerError)?;
 
-    let session_id = auth_state
+    let session_id = state
         .session_manager
         .start_session(
             &state.storage_layer,
@@ -66,7 +65,7 @@ pub async fn register(
         .await
         .map_err(|_| AppError::InternalServerError)?;
 
-    let session_cookie = auth_state
+    let session_cookie = state
         .session_manager
         .create_signed_cookie(&session_id)
         .map_err(|_| AppError::InternalServerError)?;
@@ -92,7 +91,18 @@ pub async fn register(
     Ok(res)
 }
 
-// pub async fn token(state: Data<AppState>, req: HttpRequest) {}
+pub async fn token(
+    state: Data<AppState>,
+    req: HttpRequest,
+) -> actix_web::Result<HttpResponse, AppError> {
+    // let cookie = req.cookie("mocha_session");
+    // match cookie {
+    //     Some(cookie_data) => todo!(),
+    //     None => Err(AppError::Unauthorized),
+    // }
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({"msg": "jenny sinha"})))
+}
 
 pub async fn login(
     state: Data<AppState>,
@@ -117,23 +127,6 @@ pub async fn login(
                 let access_token = Claims::default(&user.id.to_string())
                     .sign_rs256()
                     .map_err(|_| AppError::InternalServerError)?;
-
-                // let new_session_state = format!("A+J_{}", Uuid::new_v4());
-
-                // let dto = CreateSession {
-                //     user_id: user.id.to_string(),
-                //     session_state: new_session_state,
-                // };
-                //
-                // let session_state = postgres::auth::start_session(&state.pool, dto)
-                //     .await
-                //     .map_err(|_| AppError::InternalServerError)?;
-                //
-                // let mut res = HttpResponse::Ok().json(
-                //     serde_json::json!({"msg":"successfully logged in", "access_token": access_token}),
-                // );
-                // res.add_cookie(&Cookie::new("session_state", session_state))
-                //     .map_err(|_| AppError::InternalServerError)?;
 
                 Err(AppError::BadRequest)
             } else {

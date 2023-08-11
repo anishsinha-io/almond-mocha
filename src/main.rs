@@ -8,7 +8,7 @@ mod app;
 async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().expect("error loading environment variables");
 
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
 
     let state = web::Data::new(AppState::new("mocha").await);
 
@@ -16,11 +16,11 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         // let auth = HttpAuthentication::bearer(guards::jwt_guard);
-        let session = HttpAuthentication::with_fn(guards::session_guard);
+        // let session = HttpAuthentication::with_fn(guards::session_guard);
 
         App::new()
             .wrap(Logger::default())
-            .wrap(session)
+            // .wrap(session)
             .app_data(state.clone())
             .service(web::scope("/api").configure(routes::config))
     })
