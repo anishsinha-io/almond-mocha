@@ -1,5 +1,10 @@
-use actix_web::{middleware::Logger, web, App, HttpServer};
+use actix_web::{
+    middleware::{ErrorHandlers, Logger},
+    web, App, HttpServer,
+};
 use app::{routes, state::AppState};
+
+use crate::app::errors::AppError;
 
 mod app;
 
@@ -16,6 +21,11 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
+            .wrap(
+                ErrorHandlers::new().handler(actix_web::http::StatusCode::UNAUTHORIZED, |_res| {
+                    Err(AppError::Unauthorized)?
+                }),
+            )
             .app_data(state.clone())
             .service(web::scope("/api").configure(routes::config))
     })

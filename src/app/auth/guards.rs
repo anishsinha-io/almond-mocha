@@ -27,7 +27,10 @@ pub async fn session_guard(
             req.extensions_mut().insert::<Session>(session);
             Ok(req)
         }
-        Err(_) => Err((ErrorUnauthorized("invalid session".to_owned()), req)),
+        Err(_) => Err((
+            ErrorUnauthorized(serde_json::json!({"error": "invalid session"})),
+            req,
+        )),
     }
 }
 

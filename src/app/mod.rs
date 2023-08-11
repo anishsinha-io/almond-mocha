@@ -2,7 +2,7 @@ mod auth;
 mod config;
 pub mod controllers;
 mod dto;
-mod errors;
+pub mod errors;
 mod launch;
 mod pagination;
 mod posts;
