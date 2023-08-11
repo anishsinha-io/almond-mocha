@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 pub static ISS: &str = "milkandmocha";
 pub static AUD: &str = "milkandmocha";
-pub static ACCESS_TOKEN_LIFETIME: usize = 60 * 2;
+pub static ACCESS_TOKEN_LIFETIME: usize = 60 * 5;
 // pub static REFRESH_TOKEN_LIFETIME: usize = 60 * 60 * 24 * 30 * 3;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

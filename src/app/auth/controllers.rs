@@ -87,6 +87,7 @@ pub async fn register(
     let mut cookie_expiration = OffsetDateTime::now_utc();
     cookie_expiration += Duration::weeks(52);
     cookie.set_expires(cookie_expiration);
+    cookie.set_path("/");
 
     match state.config.launch_mode {
         LaunchMode::Production | LaunchMode::Staging => cookie.set_secure(true),
@@ -105,6 +106,8 @@ pub async fn token(
     let cookie = req.cookie("mocha_session");
     match cookie {
         Some(cookie_data) => {
+            // let value = cookie_data.value();
+            // log::debug!("{value}");
             let session = state
                 .session_manager
                 .check_session(&state.storage_layer, cookie_data.value())
@@ -189,6 +192,7 @@ pub async fn login(
                 let mut cookie_expiration = OffsetDateTime::now_utc();
                 cookie_expiration += Duration::weeks(52);
                 cookie.set_expires(cookie_expiration);
+                cookie.set_path("/");
 
                 match state.config.launch_mode {
                     LaunchMode::Production | LaunchMode::Staging => cookie.set_secure(true),

@@ -35,7 +35,11 @@ impl SessionManager {
             cookie,
             &DecodingKey::from_rsa_pem(public_key.as_bytes())?,
             &Validation::new(Algorithm::RS256),
-        )?;
+        )
+        .map_err(|e| {
+            log::error!("{}", e);
+            e
+        })?;
 
         Ok(decoded.claims)
     }
