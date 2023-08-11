@@ -1,5 +1,8 @@
 use actix_web::{
-    cookie::Cookie,
+    cookie::{
+        time::{Duration, OffsetDateTime},
+        Cookie,
+    },
     web::{Data, Json},
     HttpRequest, HttpResponse,
 };
@@ -12,7 +15,7 @@ use crate::app::{
     state::AppState,
 };
 
-use super::{state::AuthState, tokens::Claims};
+use super::tokens::Claims;
 
 pub async fn register(
     state: Data<AppState>,
@@ -81,6 +84,10 @@ pub async fn register(
     let mut cookie = Cookie::new("mocha_session", &session_cookie);
     cookie.set_http_only(true);
 
+    let mut cookie_expiration = OffsetDateTime::now_utc();
+    cookie_expiration += Duration::weeks(52);
+    cookie.set_expires(cookie_expiration);
+
     match state.config.launch_mode {
         LaunchMode::Production | LaunchMode::Staging => cookie.set_secure(true),
         _ => (),
@@ -95,18 +102,27 @@ pub async fn token(
     state: Data<AppState>,
     req: HttpRequest,
 ) -> actix_web::Result<HttpResponse, AppError> {
-    // let cookie = req.cookie("mocha_session");
-    // match cookie {
-    //     Some(cookie_data) => todo!(),
-    //     None => Err(AppError::Unauthorized),
-    // }
+    let cookie = req.cookie("mocha_session");
+    match cookie {
+        Some(cookie_data) => {
+            let session = state
+                .session_manager
+                .check_session(&state.storage_layer, cookie_data.value())
+                .await
+                .map_err(|_| AppError::Unauthorized)?;
 
-    Ok(HttpResponse::Ok().json(serde_json::json!({"msg": "jenny sinha"})))
+            let access_token = Claims::default(&session.user_id.to_string())
+                .sign_rs256()
+                .map_err(|_| AppError::InternalServerError)?;
+
+            Ok(HttpResponse::Ok().json(serde_json::json!({ "access_token": access_token })))
+        }
+        None => Err(AppError::Unauthorized),
+    }
 }
 
 pub async fn login(
     state: Data<AppState>,
-    auth_state: Data<AuthState>,
     data: Json<LoginUser>,
 ) -> actix_web::Result<HttpResponse, AppError> {
     let raw_data = data.into_inner();
@@ -123,12 +139,48 @@ pub async fn login(
         Some(user) => {
             let candidate = raw_data.password;
             let hash = user.credential_hash;
-            if auth_state.credential_manager.verify_hash(&candidate, &hash) {
+            if state.credential_manager.verify_hash(&candidate, &hash) {
                 let access_token = Claims::default(&user.id.to_string())
                     .sign_rs256()
                     .map_err(|_| AppError::InternalServerError)?;
 
-                Err(AppError::BadRequest)
+                let session_id = state
+                    .session_manager
+                    .start_session(
+                        &state.storage_layer,
+                        CreateSession {
+                            user_id: user.id.clone().to_string(),
+                            data: serde_json::json!({}),
+                            created_at: chrono::offset::Utc::now(),
+                            updated_at: chrono::offset::Utc::now(),
+                        },
+                    )
+                    .await
+                    .map_err(|_| AppError::InternalServerError)?;
+
+                let session_cookie = state
+                    .session_manager
+                    .create_signed_cookie(&session_id)
+                    .map_err(|_| AppError::InternalServerError)?;
+
+                let mut res =
+                    HttpResponse::Ok().json(serde_json::json!({ "access_token": access_token }));
+
+                let mut cookie = Cookie::new("mocha_session", &session_cookie);
+                cookie.set_http_only(true);
+
+                let mut cookie_expiration = OffsetDateTime::now_utc();
+                cookie_expiration += Duration::weeks(52);
+                cookie.set_expires(cookie_expiration);
+
+                match state.config.launch_mode {
+                    LaunchMode::Production | LaunchMode::Staging => cookie.set_secure(true),
+                    _ => (),
+                };
+
+                res.add_cookie(&cookie)
+                    .map_err(|_| AppError::InternalServerError)?;
+                Ok(res)
             } else {
                 Err(AppError::Unauthorized)
             }

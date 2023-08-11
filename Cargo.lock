@@ -160,7 +160,7 @@ dependencies = [
  "bytes",
  "bytestring",
  "cfg-if",
- "cookie",
+ "cookie 0.16.2",
  "derive_more",
  "encoding_rs",
  "futures-core",
@@ -600,6 +600,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e859cd57d0710d9e06c381b550c06e76992472a8c6d527aecd2fc673dcc231fb"
 dependencies = [
  "percent-encoding",
+ "time 0.3.23",
+ "version_check",
+]
+
+[[package]]
+name = "cookie"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7efb37c3e1ccb1ff97164ad95ac1606e8ccd35b3fa0a7d99a304c7f4a428cc24"
+dependencies = [
  "time 0.3.23",
  "version_check",
 ]
@@ -1435,6 +1445,7 @@ dependencies = [
  "bcrypt",
  "chacha20poly1305",
  "chrono",
+ "cookie 0.17.0",
  "derive_more",
  "dotenvy",
  "env_logger",
