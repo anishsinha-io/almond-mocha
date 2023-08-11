@@ -4,7 +4,7 @@ use actix_web::{
         Cookie,
     },
     web::{Data, Json, ReqData},
-    HttpMessage, HttpRequest, HttpResponse,
+    HttpRequest, HttpResponse,
 };
 
 use crate::app::{
