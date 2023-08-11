@@ -42,6 +42,7 @@ pub async fn get_user_by_id(
     Ok(user)
 }
 
+#[allow(unused)]
 pub async fn get_user_by_email(
     pool: &Pool<Postgres>,
     data: GetUserByEmail,

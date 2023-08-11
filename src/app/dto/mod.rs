@@ -10,7 +10,7 @@ pub use posts::{
     GetSpaceById,
 };
 pub use types::HashAlgorithm;
-pub use users::{CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById};
+pub use users::{CreateUser, DeleteUser, EditUser, EditUserInfo, GetUserByEmail, GetUserById};
 
 pub use auth::{
     CreateSession, DeleteSession, DeleteUserSessions, EditSession, GetSessionById,

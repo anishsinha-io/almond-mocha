@@ -6,8 +6,8 @@ use crate::app::{
 use derive_more::Display;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde_json::Value;
-use std::env;
-use std::error::Error;
+use std::{env, time::SystemTime};
+use std::{error::Error, time::UNIX_EPOCH};
 
 #[derive(Debug, Display, PartialEq, Eq)]
 pub enum SessionInterface {
@@ -72,7 +72,14 @@ impl SessionManager {
         session_id: &str,
     ) -> Result<String, Box<dyn Error + Send + Sync>> {
         let private_key = env::var("SESSION_SIGNING_KEY").unwrap();
-        let data = serde_json::json!({ "session_id": session_id, "exp": 1891722557});
+
+        let mut exp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as usize;
+
+        exp += 60 * 60 * 24 * 52 * 3;
+        let data = serde_json::json!({ "session_id": session_id, "exp": exp });
 
         let session_cookie_data = jsonwebtoken::encode::<Value>(
             &Header::new(Algorithm::RS256),
