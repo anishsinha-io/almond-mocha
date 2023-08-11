@@ -26,7 +26,7 @@ impl SessionManager {
         Self { interface }
     }
 
-    fn verify_session_signature(
+    pub fn verify_session_signature(
         &self,
         cookie: &str,
     ) -> Result<Value, Box<dyn Error + Send + Sync>> {

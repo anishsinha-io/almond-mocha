@@ -9,7 +9,10 @@ pub fn config(cfg: &mut ServiceConfig) {
         web::scope("/auth")
             .route("/register", web::post().to(register))
             .route("/login", web::post().to(login))
-            .wrap(session)
-            .route("/token", web::post().to(token)),
+            .service(
+                web::scope("")
+                    .wrap(session)
+                    .route("/token", web::post().to(token)),
+            ),
     );
 }

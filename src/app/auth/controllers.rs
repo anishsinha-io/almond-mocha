@@ -9,7 +9,7 @@ use actix_web::{
 
 use crate::app::{
     datasources::{postgres, users},
-    dto::{CreateSession, CreateUser, GetUserByEmail, LoginUser, RegisterUser},
+    dto::{CreateSession, CreateUser, DeleteSession, GetUserByEmail, LoginUser, RegisterUser},
     errors::AppError,
     launch::LaunchMode,
     state::AppState,
@@ -124,7 +124,24 @@ pub async fn token(
 pub async fn login(
     state: Data<AppState>,
     data: Json<LoginUser>,
+    req: HttpRequest,
 ) -> actix_web::Result<HttpResponse, AppError> {
+    let existing_session_cookie = req.cookie("mocha_session");
+    if let Some(session_cookie) = existing_session_cookie {
+        let session_data = state
+            .session_manager
+            .verify_session_signature(session_cookie.value())
+            .map_err(|_| AppError::Forbidden)?;
+
+        let id = session_data["session_id"].as_str().unwrap_or("");
+
+        state
+            .session_manager
+            .end_session(&state.storage_layer, DeleteSession { id: id.to_owned() })
+            .await
+            .map_err(|_| AppError::InternalServerError)?
+    };
+
     let raw_data = data.into_inner();
 
     let dto = GetUserByEmail {
