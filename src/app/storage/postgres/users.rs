@@ -100,7 +100,9 @@ pub async fn delete_user(
 
 #[cfg(test)]
 mod tests {
-    use crate::app::{auth::CredentialManager, dto::HashAlgorithm, storage::postgres::create_pool};
+    use crate::app::{
+        auth::CredentialManager, dto::HashAlgorithm, storage::postgres::create_pool, util,
+    };
 
     use super::*;
 
@@ -119,10 +121,13 @@ mod tests {
         initialize();
         let pool = create_pool(5).await.unwrap();
 
+        let random_suffix = util::rng::random_string(4);
+
+        let email = format!("jennycho35-{random_suffix}@gmail.com");
         let mut nonexistent = get_user_by_email(
             &pool,
             GetUserByEmail {
-                email: "jennycho35@gmail.com".to_owned(),
+                email: email.clone(),
             },
         )
         .await
@@ -136,8 +141,8 @@ mod tests {
         let new_user = CreateUser {
             first_name: "Jenny".to_owned(),
             last_name: "Sinha".to_owned(),
-            email: "jennycho35@gmail.com".to_owned(),
-            username: "jennysinha".to_owned(),
+            email: email.clone(),
+            username: format!("jennysinha-{random_suffix}"),
             image_uri: "https://assets.anishsinha.com/jenny".to_owned(),
             hashed_password: Some(hash.to_owned()),
             algorithm: Some(HashAlgorithm::Argon2),
@@ -150,7 +155,7 @@ mod tests {
         let existing_user = get_user_by_email(
             &pool,
             GetUserByEmail {
-                email: "jennycho35@gmail.com".to_owned(),
+                email: email.clone(),
             },
         )
         .await
@@ -187,7 +192,7 @@ mod tests {
         let by_email = get_user_by_email(
             &pool,
             GetUserByEmail {
-                email: "jennycho35@gmail.com".to_owned(),
+                email: email.clone(),
             },
         )
         .await

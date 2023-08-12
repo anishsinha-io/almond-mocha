@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateTag {
+    pub space_id: String,
     pub name: String,
     pub description: String,
 }
@@ -26,4 +27,14 @@ pub struct EditTag {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeleteTag {
     pub id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetTagsBySpace {
+    space_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetTagsByPrefix {
+    prefix: String,
 }

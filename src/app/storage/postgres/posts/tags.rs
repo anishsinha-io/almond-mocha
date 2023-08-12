@@ -76,5 +76,66 @@ mod tests {
     }
 
     #[tokio::test]
-    pub async fn test_tags() {}
+    pub async fn test_tags() {
+        initialize();
+        let pool = create_pool(5)
+            .await
+            .expect("error creating connection pool");
+
+        let (new_tag_id, new_tag_name) = create_tag(
+            &pool,
+            CreateTag {
+                name: "rust".to_owned(),
+                description: "Posts about the rust programming language".to_owned(),
+            },
+        )
+        .await
+        .expect("error creating tag");
+
+        println!("new tag created: {new_tag_name}");
+
+        let tag = get_tag_by_id(
+            &pool,
+            GetTagById {
+                id: new_tag_id.clone(),
+            },
+        )
+        .await
+        .expect("error fetching tag")
+        .expect("tag is none");
+
+        println!("{:#?}", tag);
+
+        edit_tag(
+            &pool,
+            EditTag {
+                id: tag.id.to_string(),
+                name: "rust-lang".to_owned(),
+                description: "All about the Rust programming language".to_owned(),
+            },
+        )
+        .await
+        .expect("error editing tag");
+
+        let edited_tag = get_tag_by_id(
+            &pool,
+            GetTagById {
+                id: new_tag_id.clone(),
+            },
+        )
+        .await
+        .expect("error fetching tag")
+        .expect("tag is none");
+
+        assert_eq!(edited_tag.tag_name, "rust-lang");
+
+        delete_tag(
+            &pool,
+            DeleteTag {
+                id: new_tag_id.to_owned(),
+            },
+        )
+        .await
+        .expect("error deleting tag");
+    }
 }

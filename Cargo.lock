@@ -1452,6 +1452,7 @@ dependencies = [
  "futures-util",
  "hmac",
  "jsonwebtoken",
+ "lazy_static",
  "log",
  "mobc",
  "mobc-redis",

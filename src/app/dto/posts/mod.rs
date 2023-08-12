@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 mod spaces;
 mod tags;
 
-pub use spaces::{CreateSpace, DeleteSpace, GetSpaceById};
+pub use spaces::{CreateSpace, DeleteSpace, EditSpace, GetSpaceById};
 pub use tags::{CreateTag, DeleteTag, EditTag, GetTagById};
 
 #[derive(Serialize, Deserialize)]

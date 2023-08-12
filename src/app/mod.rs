@@ -11,5 +11,6 @@ pub mod routes;
 pub mod state;
 mod storage;
 mod users;
+mod util;
 
 pub use auth::guards;
