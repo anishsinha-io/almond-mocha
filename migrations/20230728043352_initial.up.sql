@@ -86,6 +86,7 @@ create table if not exists tags(
   id uuid not null default uuid_generate_v4() primary key,
   space_id uuid not null references spaces(id) on delete cascade,
   tag_name text not null,
+  tag_description text not null,
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp,
   unique (tag_name)

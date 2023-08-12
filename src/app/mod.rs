@@ -1,3 +1,4 @@
+mod admin;
 mod auth;
 mod config;
 pub mod controllers;
