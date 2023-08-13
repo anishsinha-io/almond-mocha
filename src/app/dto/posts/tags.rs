@@ -31,10 +31,5 @@ pub struct DeleteTag {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetTagsBySpace {
-    space_id: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GetTagsByPrefix {
-    prefix: String,
+    pub space_id: String,
 }

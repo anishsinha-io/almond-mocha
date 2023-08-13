@@ -1,17 +1,17 @@
 use chrono::{DateTime, Utc};
-use sqlx::QueryBuilder;
-use sqlx::{types::Uuid, Pool, Postgres};
+use sqlx::{types::Uuid, Postgres};
+use sqlx::{Executor, QueryBuilder};
 use std::error::Error;
 
 use crate::app::dto::{
     CreateSpace, CreateTag, DeleteSpace, DeleteTag, EditSpace, EditTag, GetSpaceById, GetTagById,
-    PaginationLimits, SpacePaginationOptions,
+    GetTagsBySpace, PaginationLimits, SpacePaginationOptions, TagPaginationOptions,
 };
 use crate::app::pagination::PaginationContainer;
 use crate::app::storage::entities::{Space, Tag};
 
-pub async fn create_space(
-    pool: &Pool<Postgres>,
+pub async fn create_space<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: CreateSpace,
 ) -> Result<String, Box<dyn Error + Send + Sync>> {
     let space = sqlx::query!(
@@ -19,14 +19,14 @@ pub async fn create_space(
         data.bio,
         data.space_name
     )
-    .fetch_one(pool)
+    .fetch_one(executor)
     .await?;
 
     Ok(space.id.to_string())
 }
 
-pub async fn get_space_by_id(
-    pool: &Pool<Postgres>,
+pub async fn get_space_by_id<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: GetSpaceById,
 ) -> Result<Option<Space>, Box<dyn Error + Send + Sync>> {
     let id = Uuid::parse_str(&data.id)?;
@@ -35,13 +35,13 @@ pub async fn get_space_by_id(
         r#"select id, space_name, bio, created_at, updated_at from jen.spaces where id=$1"#,
         id
     )
-    .fetch_optional(pool)
+    .fetch_optional(executor)
     .await?;
     Ok(space)
 }
 
-pub async fn edit_space(
-    pool: &Pool<Postgres>,
+pub async fn edit_space<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: EditSpace,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let id = Uuid::parse_str(&data.id)?;
@@ -50,29 +50,26 @@ pub async fn edit_space(
         .bind(id)
         .bind(data.space_name)
         .bind(data.bio)
-        .execute(pool)
+        .execute(executor)
         .await?;
     Ok(())
 }
 
-pub async fn delete_space(
-    pool: &Pool<Postgres>,
+pub async fn delete_space<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: DeleteSpace,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let id = Uuid::parse_str(&data.id)?;
     sqlx::query!(r#"delete from jen.spaces where id=$1"#, id)
-        .execute(pool)
+        .execute(executor)
         .await?;
     Ok(())
 }
 
-pub async fn get_spaces(
-    pool: &Pool<Postgres>,
+pub async fn get_spaces<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     pagination: PaginationLimits<SpacePaginationOptions>,
 ) -> Result<PaginationContainer<Space>, Box<dyn Error + Send + Sync>> {
-    // let sql = "select id, space_name, bio, created_at, updated_at from jen.spaces
-    //            order by space_name offset $1 limit $2";
-
     let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
         "select id, space_name, bio, created_at, updated_at from jen.spaces order by space_name ",
     );
@@ -91,14 +88,7 @@ pub async fn get_spaces(
     type SpaceTuple = (Uuid, String, String, DateTime<Utc>, DateTime<Utc>);
     let limit = pagination.limit;
 
-    let rows: Vec<SpaceTuple> = sql.fetch_all(pool).await?;
-    // let rows: Vec<SpaceTuple> =
-    // take one extra
-    // let rows: Vec<SpaceTuple> = sqlx::query_as(sql)
-    //     .bind(pagination.offset)
-    //     .bind(pagination.limit + 1)
-    //     .fetch_all(pool)
-    //     .await?;
+    let rows: Vec<SpaceTuple> = sql.fetch_all(executor).await?;
 
     let all_spaces = rows
         .into_iter()
@@ -114,22 +104,23 @@ pub async fn get_spaces(
     Ok(PaginationContainer::new(all_spaces, limit))
 }
 
-pub async fn create_tag(
-    pool: &Pool<Postgres>,
+pub async fn create_tag<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: CreateTag,
 ) -> Result<(String, String), Box<dyn Error + Send + Sync>> {
     let sql = "insert into jen.tags (space_id, tag_name, tag_description) values ($1, $2, $3) returning id, tag_name";
+    let space_id = Uuid::parse_str(&data.space_id)?;
     let result: (Uuid, String) = sqlx::query_as(sql)
-        .bind(data.space_id)
+        .bind(space_id)
         .bind(data.name)
         .bind(data.description)
-        .fetch_one(pool)
+        .fetch_one(executor)
         .await?;
     Ok((result.0.to_string(), result.1))
 }
 
-pub async fn get_tag_by_id(
-    pool: &Pool<Postgres>,
+pub async fn get_tag_by_id<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: GetTagById,
 ) -> Result<Option<Tag>, Box<dyn Error + Send + Sync>> {
     let id = Uuid::parse_str(&data.id)?;
@@ -140,13 +131,59 @@ pub async fn get_tag_by_id(
                spaces.id=tags.space_id and tags.id=$1",
         id
     )
-    .fetch_optional(pool)
+    .fetch_optional(executor)
     .await?;
     Ok(tag)
 }
 
-pub async fn edit_tag(
-    pool: &Pool<Postgres>,
+pub async fn get_tags<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
+    data: GetTagsBySpace,
+    pagination: PaginationLimits<TagPaginationOptions>,
+) -> Result<PaginationContainer<Tag>, Box<dyn Error + Send + Sync>> {
+    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
+        "select id, space_id, tag_name, tag_description, created_at, updated_at from jen.tags where space_id=",
+    );
+    let space_id = Uuid::parse_str(&data.space_id)?;
+    query_builder
+        .push_bind(space_id)
+        .push(" order by tag_name ");
+
+    if pagination.opts.asc {
+        query_builder.push(" asc ");
+    } else {
+        query_builder.push(" desc ");
+    };
+
+    let sql = query_builder
+        .push(" limit ")
+        .push_bind(pagination.limit + 1)
+        .push(" offset ")
+        .push_bind(pagination.offset)
+        .build_query_as();
+
+    type TagTuple = (Uuid, Uuid, String, String, DateTime<Utc>, DateTime<Utc>);
+    let limit = pagination.limit;
+
+    let rows: Vec<TagTuple> = sql.fetch_all(executor).await?;
+
+    let tags = rows
+        .into_iter()
+        .map(|row| Tag {
+            id: row.0,
+            space_id: row.1,
+            tag_name: row.2,
+            tag_description: row.3,
+            created_at: row.4,
+            updated_at: row.5,
+        })
+        .collect();
+
+    Ok(PaginationContainer::new(tags, limit))
+}
+
+pub async fn edit_tag<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: EditTag,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let id = Uuid::parse_str(&data.id)?;
@@ -155,24 +192,25 @@ pub async fn edit_tag(
         .bind(id)
         .bind(data.name)
         .bind(data.description)
-        .execute(pool)
+        .execute(executor)
         .await?;
     Ok(())
 }
 
-pub async fn delete_tag(
-    pool: &Pool<Postgres>,
+pub async fn delete_tag<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: DeleteTag,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let id = Uuid::parse_str(&data.id)?;
     let sql = "delete from jen.tags where id=$1";
-    sqlx::query(sql).bind(id).execute(pool).await?;
+    sqlx::query(sql).bind(id).execute(executor).await?;
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use crate::app::{storage::postgres, util};
+    use std::collections::HashMap;
 
     use super::*;
 
@@ -182,17 +220,19 @@ mod tests {
         let pool = postgres::create_pool(5).await.expect("error creating pool");
         let random_suffix = util::rng::random_string(6);
 
+        let mut txn = pool.begin().await.expect("error starting transaction");
+
         let data = CreateSpace {
             space_name: format!("Computer Science [{random_suffix}]"),
             bio: format!("All about computer science [{random_suffix}]"),
         };
 
-        let new_space_id = create_space(&pool, data)
+        let new_space_id = create_space(&mut *txn, data)
             .await
             .expect("error creating new space");
 
         let new_space = get_space_by_id(
-            &pool,
+            &mut *txn,
             GetSpaceById {
                 id: new_space_id.clone(),
             },
@@ -204,7 +244,7 @@ mod tests {
         log::info!("new space: {:#?}", new_space);
 
         edit_space(
-            &pool,
+            &mut *txn,
             EditSpace {
                 id: new_space_id.clone(),
                 space_name: format!("CS {random_suffix}"),
@@ -215,7 +255,7 @@ mod tests {
         .expect("error editing space");
 
         let edited_space = get_space_by_id(
-            &pool,
+            &mut *txn,
             GetSpaceById {
                 id: new_space_id.clone(),
             },
@@ -227,7 +267,7 @@ mod tests {
         log::info!("edited space: {:#?}", edited_space);
 
         delete_space(
-            &pool,
+            &mut *txn,
             DeleteSpace {
                 id: new_space_id.clone(),
             },
@@ -236,7 +276,7 @@ mod tests {
         .expect("error deleting space");
 
         let deleted_space = get_space_by_id(
-            &pool,
+            &mut *txn,
             GetSpaceById {
                 id: new_space_id.clone(),
             },
@@ -300,7 +340,7 @@ mod tests {
 
         for (name, bio) in new_space_data {
             create_space(
-                &pool,
+                &mut *txn,
                 CreateSpace {
                     space_name: name,
                     bio,
@@ -311,7 +351,7 @@ mod tests {
         }
 
         let spaces = get_spaces(
-            &pool,
+            &mut *txn,
             PaginationLimits {
                 offset: 0,
                 limit: 9,
@@ -329,6 +369,182 @@ mod tests {
             .await
             .expect("error clearing table");
 
-        txn.commit().await.expect("error committing txn");
+        txn.rollback().await.expect("error committing txn");
+    }
+
+    #[tokio::test]
+    pub async fn test_tags() {
+        util::test_util::init();
+        let pool = postgres::create_pool(5).await.expect("error creating pool");
+        let random_suffix = util::rng::random_string(6);
+
+        let mut txn = pool.begin().await.unwrap();
+
+        let music_space = create_space(
+            &mut *txn,
+            CreateSpace {
+                space_name: format!("Music {random_suffix}"),
+                bio: format!("All about music {random_suffix}"),
+            },
+        )
+        .await
+        .expect("error creating space");
+
+        let (new_tag_id, new_tag_name) = create_tag(
+            &mut *txn,
+            CreateTag {
+                space_id: music_space.to_owned(),
+                name: format!("Debussy {random_suffix}"),
+                description: format!("All about Debussy's music {random_suffix}"),
+            },
+        )
+        .await
+        .expect("error creating tag");
+
+        log::info!("{new_tag_name}");
+
+        let tag = get_tag_by_id(
+            &mut *txn,
+            GetTagById {
+                id: new_tag_id.clone(),
+            },
+        )
+        .await
+        .expect("error fetching tag")
+        .expect("tag is unexpectedly none");
+
+        log::info!("{:#?}", tag);
+
+        edit_tag(
+            &mut *txn,
+            EditTag {
+                id: tag.id.clone().to_string(),
+                name: format!("music {random_suffix}"),
+                description: format!("a place for music {random_suffix}"),
+            },
+        )
+        .await
+        .expect("error editing tag");
+
+        let edited_tag = get_tag_by_id(
+            &mut *txn,
+            GetTagById {
+                id: new_tag_id.clone(),
+            },
+        )
+        .await
+        .expect("error fetching tag")
+        .expect("tag is unexpectedly none");
+
+        log::info!("{:#?}", edited_tag);
+
+        delete_tag(
+            &mut *txn,
+            DeleteTag {
+                id: tag.id.clone().to_string(),
+            },
+        )
+        .await
+        .expect("error deleting tag");
+
+        txn.rollback()
+            .await
+            .expect("error rolling back transaction");
+    }
+
+    #[tokio::test]
+    pub async fn test_tags_pagination() {
+        util::test_util::init();
+        let pool = postgres::create_pool(5).await.expect("error creating pool");
+        let random_suffix = util::rng::random_string(6);
+
+        let mut txn = pool.begin().await.unwrap();
+
+        let cs_space = create_space(
+            &mut *txn,
+            CreateSpace {
+                space_name: format!("Computer Science {random_suffix}"),
+                bio: format!("A place for computer science {random_suffix}"),
+            },
+        )
+        .await
+        .expect("error creating computer science space");
+
+        let tag_data = vec![
+            (
+                format!("rust {random_suffix}"),
+                format!("all about the rust programming language {random_suffix}"),
+            ),
+            (
+                format!("c++ {random_suffix}"),
+                format!("all about the c++ programming language {random_suffix}"),
+            ),
+            (
+                format!("python {random_suffix}"),
+                format!("all about the python programming language {random_suffix}"),
+            ),
+            (
+                format!("typescript {random_suffix}"),
+                format!("all about the typescript programming language {random_suffix}"),
+            ),
+            (
+                format!("java {random_suffix}"),
+                format!("all about the java programming language {random_suffix}"),
+            ),
+            (
+                format!("kotlin {random_suffix}"),
+                format!("all about the kotlin programming language {random_suffix}"),
+            ),
+            (
+                format!("clojure {random_suffix}"),
+                format!("all about the clojure programming language {random_suffix}"),
+            ),
+            (
+                format!("elixir {random_suffix}"),
+                format!("all about the elixir programming language {random_suffix}"),
+            ),
+            (
+                format!("ruby {random_suffix}"),
+                format!("all about the ruby programming language {random_suffix}"),
+            ),
+            (
+                format!("go {random_suffix}"),
+                format!("all about the go programming language {random_suffix}"),
+            ),
+        ];
+
+        let mut new_tag_ids = HashMap::<String, String>::new();
+
+        for (name, description) in tag_data {
+            let (tag_id, tag_name) = create_tag(
+                &mut *txn,
+                CreateTag {
+                    space_id: cs_space.clone(),
+                    name,
+                    description,
+                },
+            )
+            .await
+            .expect("error creating space");
+            new_tag_ids.insert(tag_name, tag_id);
+        }
+
+        let tags_container = get_tags(
+            &mut *txn,
+            GetTagsBySpace { space_id: cs_space },
+            PaginationLimits {
+                offset: 0,
+                limit: 10,
+                opts: TagPaginationOptions { asc: false },
+            },
+        )
+        .await
+        .expect("error getting tags");
+
+        assert!(tags_container.done);
+
+        txn.rollback()
+            .await
+            .expect("error rolling back transaction")
     }
 }

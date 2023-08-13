@@ -11,3 +11,8 @@ pub struct PaginationLimits<T> {
 pub struct SpacePaginationOptions {
     pub asc: bool,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TagPaginationOptions {
+    pub asc: bool,
+}
