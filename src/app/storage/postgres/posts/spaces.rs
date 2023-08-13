@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use sqlx::QueryBuilder;
 use sqlx::{types::Uuid, Pool, Postgres};
 use std::error::Error;
 
@@ -69,18 +70,35 @@ pub async fn get_spaces(
     pool: &Pool<Postgres>,
     pagination: PaginationLimits<SpacePaginationOptions>,
 ) -> Result<PaginationContainer<Space>, Box<dyn Error + Send + Sync>> {
-    let sql = "select id, space_name, bio, created_at, updated_at from jen.spaces
-               order by space_name offset $1 limit $2";
+    // let sql = "select id, space_name, bio, created_at, updated_at from jen.spaces
+    //            order by space_name offset $1 limit $2";
+
+    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
+        "select id, space_name, bio, created_at, updated_at from jen.spaces order by space_name ",
+    );
+    if pagination.opts.asc {
+        query_builder.push("asc");
+    } else {
+        query_builder.push("desc");
+    };
+    let sql = query_builder
+        .push(" offset ")
+        .push_bind(pagination.offset)
+        .push(" limit ")
+        .push_bind(pagination.limit + 1)
+        .build_query_as();
 
     type SpaceTuple = (Uuid, String, String, DateTime<Utc>, DateTime<Utc>);
     let limit = pagination.limit;
 
+    let rows: Vec<SpaceTuple> = sql.fetch_all(pool).await?;
+    // let rows: Vec<SpaceTuple> =
     // take one extra
-    let rows: Vec<SpaceTuple> = sqlx::query_as(sql)
-        .bind(pagination.offset)
-        .bind(pagination.limit + 1)
-        .fetch_all(pool)
-        .await?;
+    // let rows: Vec<SpaceTuple> = sqlx::query_as(sql)
+    //     .bind(pagination.offset)
+    //     .bind(pagination.limit + 1)
+    //     .fetch_all(pool)
+    //     .await?;
 
     let all_spaces = rows
         .into_iter()
@@ -297,7 +315,7 @@ mod tests {
             PaginationLimits {
                 offset: 0,
                 limit: 9,
-                opts: SpacePaginationOptions { asc: true },
+                opts: SpacePaginationOptions { asc: false },
             },
         )
         .await
