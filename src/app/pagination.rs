@@ -7,12 +7,15 @@ pub struct PaginationContainer<T> {
 }
 
 impl<T> PaginationContainer<T> {
-    pub fn new(items: Vec<T>, limit: i64) -> Self {
+    pub fn new(mut items: Vec<T>, limit: i64) -> Self {
         let len = items.len();
-        Self {
-            items,
-            done: len < (limit as usize + 1),
-        }
+        let done = len < (limit as usize + 1);
+
+        if !done {
+            items.pop();
+        };
+
+        Self { items, done }
     }
 }
 

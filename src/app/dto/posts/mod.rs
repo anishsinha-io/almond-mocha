@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 mod spaces;
 mod tags;
 
-pub use spaces::{CreateSpace, DeleteSpace, EditSpace, GetSpaceById};
-pub use tags::{CreateTag, DeleteTag, EditTag, GetTagById, GetTagsBySpace};
+pub use spaces::{CreateSpace, DeleteSpace, EditSpace, EditSpaceInfo, GetSpaceById};
+pub use tags::{CreateTag, DeleteTag, EditTag, EditTagInfo, GetTagById, GetTagsBySpace};
 
 #[derive(Serialize, Deserialize)]
 pub struct GetPostById {
