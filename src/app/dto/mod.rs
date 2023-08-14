@@ -6,9 +6,9 @@ mod users;
 
 pub use pagination::{PaginationLimits, SpacePaginationOptions, TagPaginationOptions};
 pub use posts::{
-    CreatePost, CreateSpace, CreateTag, DeletePost, DeleteSpace, DeleteTag, EditPost, EditSpace,
-    EditSpaceInfo, EditTag, EditTagInfo, GetPostById, GetPostsByUser, GetSpaceById, GetTagById,
-    GetTagsBySpace,
+    CreatePost, CreateSpace, CreateTag, CreateTagInfo, DeletePost, DeleteSpace, DeleteTag,
+    EditPost, EditSpace, EditSpaceInfo, EditTag, EditTagInfo, GetPostById, GetPostsByUser,
+    GetSpaceById, GetTagById, GetTagsBySpace,
 };
 pub use types::HashAlgorithm;
 pub use users::{CreateUser, DeleteUser, EditUser, EditUserInfo, GetUserByEmail, GetUserById};

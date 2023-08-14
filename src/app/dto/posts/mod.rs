@@ -3,7 +3,9 @@ mod spaces;
 mod tags;
 
 pub use spaces::{CreateSpace, DeleteSpace, EditSpace, EditSpaceInfo, GetSpaceById};
-pub use tags::{CreateTag, DeleteTag, EditTag, EditTagInfo, GetTagById, GetTagsBySpace};
+pub use tags::{
+    CreateTag, CreateTagInfo, DeleteTag, EditTag, EditTagInfo, GetTagById, GetTagsBySpace,
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct GetPostById {

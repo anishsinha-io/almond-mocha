@@ -5,9 +5,9 @@ use actix_web::{
 
 use crate::app::{
     dto::{
-        CreateSpace, CreateTag, DeleteSpace, DeleteTag, EditSpace, EditSpaceInfo, EditTag,
-        EditTagInfo, GetSpaceById, GetTagsBySpace, PaginationLimits, SpacePaginationOptions,
-        TagPaginationOptions,
+        CreateSpace, CreateTag, CreateTagInfo, DeleteSpace, DeleteTag, EditSpace, EditSpaceInfo,
+        EditTag, EditTagInfo, GetSpaceById, GetTagById, GetTagsBySpace, PaginationLimits,
+        SpacePaginationOptions, TagPaginationOptions,
     },
     errors::AppError,
     state::AppState,
@@ -88,15 +88,37 @@ pub async fn delete_space(
 
 pub async fn create_tag(
     state: Data<AppState>,
-    data: Json<CreateTag>,
+    space: Path<String>,
+    data: Json<CreateTagInfo>,
 ) -> actix_web::Result<HttpResponse, AppError> {
-    let _ = postgres::posts::spaces::create_tag(&state.storage_layer.pg, data.into_inner())
+    let info = data.into_inner();
+    let dto = CreateTag {
+        space_id: space.into_inner(),
+        name: info.name,
+        description: info.description,
+    };
+    let _ = postgres::posts::spaces::create_tag(&state.storage_layer.pg, dto)
         .await
         .map_err(|_| AppError::InternalServerError)?;
     Ok(HttpResponse::Ok().json(serde_json::json!({"msg": "succesfully created new tag"})))
 }
 
-pub async fn get_tag(state: Data<AppState>, tag: Path<String>) {}
+pub async fn get_tag(
+    state: Data<AppState>,
+    tag: Path<String>,
+) -> actix_web::Result<HttpResponse, AppError> {
+    let dto = GetTagById {
+        id: tag.into_inner(),
+    };
+
+    let maybe_tag = postgres::posts::spaces::get_tag_by_id(&state.storage_layer.pg, dto)
+        .await
+        .map_err(|_| AppError::InternalServerError)?;
+    match maybe_tag {
+        Some(tag) => Ok(HttpResponse::Ok().json(serde_json::json!({ "tag": tag }))),
+        None => Ok(HttpResponse::NotFound().json(serde_json::json!({"error": "tag not found"}))),
+    }
+}
 
 pub async fn get_tags(
     state: Data<AppState>,
