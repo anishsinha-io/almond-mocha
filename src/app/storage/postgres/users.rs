@@ -4,7 +4,7 @@ use std::error::Error;
 use crate::app::dto::{
     CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById, HashAlgorithm,
 };
-use crate::app::storage::entities::{User, UserWithCredentials};
+use crate::app::entities::users::{User, UserWithCredentials};
 
 pub async fn create_user<'a>(
     executor: impl Executor<'a, Database = Postgres> + Acquire<'a, Database = Postgres>,
