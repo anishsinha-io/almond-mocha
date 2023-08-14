@@ -1,4 +1,4 @@
-use sqlx::{types::Uuid, Pool, Postgres, Transaction};
+use sqlx::{types::Uuid, Acquire, Executor, Postgres, Transaction};
 use std::error::Error;
 
 use crate::app::dto::{
@@ -6,11 +6,11 @@ use crate::app::dto::{
 };
 use crate::app::storage::entities::{User, UserWithCredentials};
 
-pub async fn create_user(
-    pool: &Pool<Postgres>,
+pub async fn create_user<'a>(
+    executor: impl Executor<'a, Database = Postgres> + Acquire<'a, Database = Postgres>,
     data: CreateUser,
 ) -> Result<String, Box<dyn Error + Send + Sync>> {
-    let mut txn: Transaction<'_, Postgres> = pool.begin().await?;
+    let mut txn: Transaction<'_, Postgres> = executor.begin().await?;
 
     let user = sqlx::query!(
         r#"insert into jen.users (first_name, last_name, email, username, image_uri) values ($1, $2, $3, $4, $5) on conflict(email) do nothing returning id"#,
@@ -33,26 +33,26 @@ pub async fn create_user(
     Ok(user.id.to_string())
 }
 
-pub async fn get_user_by_id(
-    pool: &Pool<Postgres>,
+pub async fn get_user_by_id<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: GetUserById,
 ) -> Result<Option<User>, Box<dyn Error + Send + Sync>> {
     let id = Uuid::parse_str(&data.id)?;
-    let user = sqlx::query_as!(User, r#"select id, first_name, last_name, email, username, image_uri, created_at, updated_at from jen.users where id=$1"#, id).fetch_optional(pool).await?;
+    let user = sqlx::query_as!(User, r#"select id, first_name, last_name, email, username, image_uri, created_at, updated_at from jen.users where id=$1"#, id).fetch_optional(executor).await?;
     Ok(user)
 }
 
 #[allow(unused)]
-pub async fn get_user_by_email(
-    pool: &Pool<Postgres>,
+pub async fn get_user_by_email<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: GetUserByEmail,
 ) -> Result<Option<User>, Box<dyn Error + Send + Sync>> {
-    let user = sqlx::query_as!(User, r#"select id, first_name, last_name, email, username, image_uri, created_at, updated_at from jen.users where email=$1"#, data.email).fetch_optional(pool).await?;
+    let user = sqlx::query_as!(User, r#"select id, first_name, last_name, email, username, image_uri, created_at, updated_at from jen.users where email=$1"#, data.email).fetch_optional(executor).await?;
     Ok(user)
 }
 
-pub async fn get_user_with_credentials_by_email(
-    pool: &Pool<Postgres>,
+pub async fn get_user_with_credentials_by_email<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: GetUserByEmail,
 ) -> Result<Option<UserWithCredentials>, Box<dyn Error + Send + Sync>> {
     let user = sqlx::query_as!(
@@ -63,13 +63,13 @@ pub async fn get_user_with_credentials_by_email(
            on users.id=user_credentials.user_id and email=$1"#,
         data.email
     )
-    .fetch_optional(pool)
+    .fetch_optional(executor)
     .await?;
     Ok(user)
 }
 
-pub async fn edit_user(
-    pool: &Pool<Postgres>,
+pub async fn edit_user<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: EditUser,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let id = Uuid::parse_str(&data.id)?;
@@ -81,19 +81,20 @@ pub async fn edit_user(
         data.username,
         data.image_uri
     )
-    .execute(pool)
+    .execute(executor)
     .await?;
     Ok(())
 }
 
-pub async fn delete_user(
-    pool: &Pool<Postgres>,
+#[allow(unused)]
+pub async fn delete_user<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
     data: DeleteUser,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let id = Uuid::parse_str(&data.id)?;
     sqlx::query(r#"delete from jen.users where id=$1"#)
         .bind(id)
-        .execute(pool)
+        .execute(executor)
         .await?;
     Ok(())
 }
@@ -106,26 +107,18 @@ mod tests {
 
     use super::*;
 
-    use std::sync::Once;
-
-    static INIT: Once = Once::new();
-
-    fn initialize() {
-        INIT.call_once(|| {
-            dotenvy::dotenv().expect("error loading environment variables");
-        });
-    }
-
     #[tokio::test]
     pub async fn test_users() {
-        initialize();
+        util::test_util::init();
         let pool = create_pool(5).await.unwrap();
+
+        let mut txn = pool.begin().await.expect("error starting transaction");
 
         let random_suffix = util::rng::random_string(4);
 
         let email = format!("jennycho35-{random_suffix}@gmail.com");
         let mut nonexistent = get_user_by_email(
-            &pool,
+            &mut *txn,
             GetUserByEmail {
                 email: email.clone(),
             },
@@ -148,12 +141,12 @@ mod tests {
             algorithm: Some(HashAlgorithm::Argon2),
         };
 
-        let new_user = create_user(&pool, new_user)
+        let new_user = create_user(&mut *txn, new_user)
             .await
             .expect("error creating new user");
 
         let existing_user = get_user_by_email(
-            &pool,
+            &mut *txn,
             GetUserByEmail {
                 email: email.clone(),
             },
@@ -165,7 +158,7 @@ mod tests {
         assert_eq!(existing_user.unwrap().id.to_string(), new_user);
 
         let by_id = get_user_by_id(
-            &pool,
+            &mut *txn,
             GetUserById {
                 id: new_user.clone(),
             },
@@ -177,7 +170,7 @@ mod tests {
         assert_eq!(by_id.unwrap().id.to_string(), new_user.clone());
 
         edit_user(
-            &pool,
+            &mut *txn,
             EditUser {
                 id: new_user.clone(),
                 first_name: "Jenny".to_owned(),
@@ -190,7 +183,7 @@ mod tests {
         .expect("error editing user");
 
         let by_email = get_user_by_email(
-            &pool,
+            &mut *txn,
             GetUserByEmail {
                 email: email.clone(),
             },
@@ -202,7 +195,7 @@ mod tests {
         assert_eq!(by_email.unwrap().username, "jen_sinha");
 
         delete_user(
-            &pool,
+            &mut *txn,
             DeleteUser {
                 id: new_user.clone(),
             },
@@ -211,7 +204,7 @@ mod tests {
         .expect("error deleting user");
 
         nonexistent = get_user_by_id(
-            &pool,
+            &mut *txn,
             GetUserById {
                 id: new_user.clone(),
             },
@@ -220,5 +213,8 @@ mod tests {
         .expect("error fetching user by id");
 
         assert!(nonexistent.is_none());
+        txn.rollback()
+            .await
+            .expect("error rolling back transaction");
     }
 }
