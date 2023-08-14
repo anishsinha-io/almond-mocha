@@ -7,7 +7,7 @@ use actix_web::{
 use crate::app::{dto::posts::stickers::CreateSticker, errors::AppError, state::AppState, upload};
 
 pub async fn create_sticker(payload: Multipart) -> actix_web::Result<HttpResponse, AppError> {
-    let upload_status = upload::files::save_file(payload).await;
+    let upload_status = upload::files::save_file_fs(payload).await;
 
     match upload_status {
         Ok(_) => Ok(HttpResponse::Ok()

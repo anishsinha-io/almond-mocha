@@ -1,4 +1,5 @@
 use super::{
+    dto::AssetBackend,
     launch::LaunchMode,
     storage::{
         postgres,
@@ -14,6 +15,7 @@ pub struct Config {
     pub name: String,
     pub symmetric_secret: Vec<u8>,
     pub launch_mode: LaunchMode,
+    pub asset_backend: AssetBackend,
 }
 
 pub struct StorageLayer {
@@ -49,6 +51,7 @@ impl StorageLayer {
 }
 
 impl Config {
+    // TODO: Remove .expect calls and replace with a sensible default to avoid panics
     pub fn new(name: &str) -> Result<Self, InitError> {
         let symmetric_secret = env::var("APP_SECRET")
             .map(|s| s.as_bytes().to_vec())
@@ -64,11 +67,22 @@ impl Config {
             _ => LaunchMode::Production,
         };
 
+        let asset_backend = match env::var("ASSET_BACKEND")
+            .unwrap_or("".to_owned())
+            .to_lowercase()
+            .as_str()
+        {
+            "aws" | "amazon" | "s3" => AssetBackend::Aws,
+            "gcp" | "google" | "gcs" => AssetBackend::Gcp,
+            "azure" => AssetBackend::Azure,
+            _ => AssetBackend::Fs,
+        };
+
         Ok(Config {
             name: name.to_owned(),
             symmetric_secret,
             launch_mode,
-            // session_interface,
+            asset_backend,
         })
     }
 }

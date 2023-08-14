@@ -5,11 +5,12 @@ pub mod files {
     use actix_multipart::Multipart;
     use actix_web::web;
     use futures::{StreamExt, TryStreamExt};
+    use serde::{Deserialize, Serialize};
 
-    use crate::app::errors::AppError;
+    use crate::app::{dto::AssetBackend, errors::AppError};
 
-    // TODO: Remove unwrap when extracing file_name from content_type
-    pub async fn save_file(mut payload: Multipart) -> Result<(), Box<dyn Error + Send + Sync>> {
+    // TODO: Remove unwrap when extracing file_name from content_type and add some safeguards
+    pub async fn save_file_fs(mut payload: Multipart) -> Result<(), Box<dyn Error + Send + Sync>> {
         while let Ok(Some(mut field)) = payload.try_next().await {
             let name = field.name();
             log::debug!("{name}");
@@ -30,5 +31,17 @@ pub mod files {
             }
         }
         Ok(())
+    }
+
+    pub async fn save_file(
+        backend: AssetBackend,
+        payload: Multipart,
+    ) -> Result<(), Box<dyn Error + Send + Sync>> {
+        match backend {
+            AssetBackend::Fs => save_file_fs(payload).await,
+            AssetBackend::Aws => unimplemented!(),
+            AssetBackend::Gcp => unimplemented!(),
+            AssetBackend::Azure => unimplemented!(),
+        }
     }
 }
