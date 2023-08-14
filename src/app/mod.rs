@@ -3,6 +3,7 @@ mod auth;
 mod config;
 pub mod controllers;
 mod dto;
+pub mod entities;
 pub mod errors;
 mod launch;
 mod pagination;
