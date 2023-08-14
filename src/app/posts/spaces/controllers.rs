@@ -4,10 +4,17 @@ use actix_web::{
 };
 
 use crate::app::{
+    // dto::{
+    //     CreateSpace, CreateTag, CreateTagInfo, DeleteSpace, DeleteTag, EditSpace, EditSpaceInfo,
+    //     EditTag, EditTagInfo, GetSpaceById, GetTagById, GetTagsBySpace, PaginationLimits,
+    //     SpacePaginationOptions, TagPaginationOptions,
+    // },
     dto::{
-        CreateSpace, CreateTag, CreateTagInfo, DeleteSpace, DeleteTag, EditSpace, EditSpaceInfo,
-        EditTag, EditTagInfo, GetSpaceById, GetTagById, GetTagsBySpace, PaginationLimits,
-        SpacePaginationOptions, TagPaginationOptions,
+        pagination::{PaginationLimits, SpacePaginationOptions, TagPaginationOptions},
+        spaces::{CreateSpace, DeleteSpace, EditSpace, EditSpaceInfo, GetSpaceById},
+        tags::{
+            CreateTag, CreateTagInfo, DeleteTag, EditTag, EditTagInfo, GetTagById, GetTagsBySpace,
+        },
     },
     errors::AppError,
     state::AppState,

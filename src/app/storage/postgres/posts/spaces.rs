@@ -4,8 +4,9 @@ use sqlx::{Executor, QueryBuilder};
 use std::error::Error;
 
 use crate::app::dto::{
-    CreateSpace, CreateTag, DeleteSpace, DeleteTag, EditSpace, EditTag, GetSpaceById, GetTagById,
-    GetTagsBySpace, PaginationLimits, SpacePaginationOptions, TagPaginationOptions,
+    pagination::{PaginationLimits, SpacePaginationOptions, TagPaginationOptions},
+    spaces::{CreateSpace, DeleteSpace, EditSpace, GetSpaceById},
+    tags::{CreateTag, DeleteTag, EditTag, GetTagById, GetTagsBySpace},
 };
 use crate::app::entities::spaces::Space;
 use crate::app::entities::tags::Tag;

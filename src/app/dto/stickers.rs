@@ -30,4 +30,3 @@ pub struct EditSticker {
 pub struct DeleteSticker {
     pub id: String,
 }
-
