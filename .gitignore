@@ -4,3 +4,7 @@
 *.env.*
 !.env.example
 
+assets/*
+!assets/README.md
+
+
