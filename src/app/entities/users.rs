@@ -4,7 +4,7 @@ use sqlx::types::{
     Uuid,
 };
 
-use crate::app::dto::HashAlgorithm;
+use crate::app::types::HashAlgorithm;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {

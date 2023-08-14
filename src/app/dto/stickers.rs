@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::app::dto::AssetBackend;
+use crate::app::types::AssetBackend;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateSticker {

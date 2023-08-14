@@ -1,4 +1,4 @@
-use crate::app::dto::HashAlgorithm;
+use crate::app::types::HashAlgorithm;
 use argon2::{self, Config};
 use rand::Rng;
 use std::error::Error;

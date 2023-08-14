@@ -6,7 +6,7 @@ pub mod files {
     use actix_web::web;
     use futures::{StreamExt, TryStreamExt};
 
-    use crate::app::{dto::AssetBackend, errors::AppError};
+    use crate::app::{errors::AppError, types::AssetBackend};
 
     // TODO: Remove unwrap when extracing file_name from content_type and add some safeguards
     pub async fn save_file_fs(mut payload: Multipart) -> Result<(), Box<dyn Error + Send + Sync>> {

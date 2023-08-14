@@ -1,10 +1,9 @@
 use sqlx::{types::Uuid, Acquire, Executor, Postgres, Transaction};
 use std::error::Error;
 
-use crate::app::dto::{
-    CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById, HashAlgorithm,
-};
+use crate::app::dto::{CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById};
 use crate::app::entities::users::{User, UserWithCredentials};
+use crate::app::types::HashAlgorithm;
 
 pub async fn create_user<'a>(
     executor: impl Executor<'a, Database = Postgres> + Acquire<'a, Database = Postgres>,
@@ -102,7 +101,7 @@ pub async fn delete_user<'a>(
 #[cfg(test)]
 mod tests {
     use crate::app::{
-        auth::CredentialManager, dto::HashAlgorithm, storage::postgres::create_pool, util,
+        auth::CredentialManager, storage::postgres::create_pool, types::HashAlgorithm, util,
     };
 
     use super::*;
