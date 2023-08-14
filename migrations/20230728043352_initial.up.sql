@@ -20,10 +20,18 @@ end;
 $$
 language plpgsql;
 --
--- hash algorithms type
+-- hash_algorithm type
 create type hash_algorithm as enum(
   'argon2',
   'bcrypt'
+);
+--
+-- asset_backend type
+create type asset_backend as enum(
+  'fs',
+  'aws',
+  'gcp',
+  'azure'
 );
 --
 -- users table
@@ -117,6 +125,56 @@ create table if not exists sessions(
 );
 create or replace trigger update_sessions_timestamp
   before update on sessions for each row
+  execute function update_timestamp();
+--
+-- permissions table
+create table if not exists permissions(
+  id uuid not null default uuid_generate_v4() primary key,
+  permission_name text not null,
+  permission_description text not null,
+  created_at timestamptz not null default current_timestamp,
+  updated_at timestamptz not null default current_timestamp,
+  unique (permission_name)
+);
+create or replace trigger update_permissions_timestamp
+  before update on permissions for each row
+  execute function update_timestamp();
+--
+-- user_permission_mappings table
+create table if not exists user_permission_mappings(
+  id uuid not null default uuid_generate_v4() primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  permission_id uuid not null references permissions(id) on delete cascade,
+  created_at timestamptz not null default current_timestamp,
+  updated_at timestamptz not null default current_timestamp,
+  unique (user_id, permission_id)
+);
+create or replace trigger update_user_permission_mappings_timestamp
+  before update on user_permission_mappings for each row
+  execute function update_timestamp();
+--
+-- stickers table
+create table if not exists stickers(
+  id uuid not null default uuid_generate_v4() primary key,
+  backend asset_backend not null default 'fs' ::asset_backend,
+  file_path text not null,
+  created_at timestamptz not null default current_timestamp,
+  updated_at timestamptz not null default current_timestamp
+);
+create or replace trigger update_stickers_timestamp
+  before update on stickers for each row
+  execute function update_timestamp();
+--
+-- post_stickers table
+create table if not exists post_stickers(
+  id uuid not null default uuid_generate_v4() primary key,
+  post_id uuid not null references posts(id) on delete cascade,
+  sticker_id uuid not null references stickers(id) on delete cascade,
+  created_at timestamptz not null default current_timestamp,
+  updated_at timestamptz not null default current_timestamp
+);
+create or replace trigger update_post_stickers_timestamp
+  before update on post_stickers for each row
   execute function update_timestamp();
 commit;
 
