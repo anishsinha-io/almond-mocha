@@ -1,6 +1,6 @@
 mod auth;
 mod pagination;
-mod posts;
+pub mod posts;
 mod types;
 mod users;
 
@@ -10,7 +10,7 @@ pub use posts::{
     EditPost, EditSpace, EditSpaceInfo, EditTag, EditTagInfo, GetPostById, GetPostsByUser,
     GetSpaceById, GetTagById, GetTagsBySpace,
 };
-pub use types::HashAlgorithm;
+pub use types::{AssetBackend, HashAlgorithm};
 pub use users::{CreateUser, DeleteUser, EditUser, EditUserInfo, GetUserByEmail, GetUserById};
 
 pub use auth::{

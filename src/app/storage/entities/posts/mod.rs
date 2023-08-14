@@ -1,4 +1,5 @@
 mod spaces;
+mod stickers;
 mod tags;
 
 pub use spaces::Space;
