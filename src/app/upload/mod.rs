@@ -5,7 +5,6 @@ pub mod files {
     use actix_multipart::Multipart;
     use actix_web::web;
     use futures::{StreamExt, TryStreamExt};
-    use serde::{Deserialize, Serialize};
 
     use crate::app::{dto::AssetBackend, errors::AppError};
 

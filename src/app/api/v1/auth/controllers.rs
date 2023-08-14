@@ -16,7 +16,7 @@ use crate::app::{
     storage::{postgres, users},
 };
 
-use super::tokens::Claims;
+use crate::app::auth::tokens::Claims;
 
 pub async fn register(
     state: Data<AppState>,

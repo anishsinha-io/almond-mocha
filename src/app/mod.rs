@@ -1,18 +1,15 @@
-mod admin;
+pub mod api;
 mod auth;
 mod config;
-pub mod controllers;
 mod dto;
 pub mod entities;
 pub mod errors;
 mod launch;
 mod pagination;
-mod posts;
 pub mod routes;
 pub mod state;
 mod storage;
 pub mod upload;
-mod users;
 mod util;
 
 pub use auth::guards;
