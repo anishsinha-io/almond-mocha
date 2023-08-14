@@ -4,7 +4,6 @@
 *.env.*
 !.env.example
 
-assets/*
-!assets/README.md
+src/app/assets/**/*.jpg
 
 
