@@ -11,3 +11,15 @@ pub struct Session {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Permission {
+    pub id: Uuid,
+    pub permission_name: String,
+    pub permission_description: String,
+    pub permission_scopes: Vec<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+

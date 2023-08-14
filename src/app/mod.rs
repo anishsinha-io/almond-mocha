@@ -10,6 +10,7 @@ mod posts;
 pub mod routes;
 pub mod state;
 mod storage;
+pub mod upload;
 mod users;
 mod util;
 

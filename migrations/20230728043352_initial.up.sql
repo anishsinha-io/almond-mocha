@@ -132,6 +132,7 @@ create table if not exists permissions(
   id uuid not null default uuid_generate_v4() primary key,
   permission_name text not null,
   permission_description text not null,
+  permission_scopes text[] not null default array[] ::text[],
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp,
   unique (permission_name)
@@ -156,7 +157,9 @@ create or replace trigger update_user_permission_mappings_timestamp
 -- stickers table
 create table if not exists stickers(
   id uuid not null default uuid_generate_v4() primary key,
+  user_id uuid not null references users(id) on delete cascade,
   backend asset_backend not null default 'fs' ::asset_backend,
+  private boolean not null default false,
   file_path text not null,
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp

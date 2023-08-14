@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 mod spaces;
+pub mod stickers;
 mod tags;
 
 pub use spaces::{CreateSpace, DeleteSpace, EditSpace, EditSpaceInfo, GetSpaceById};
