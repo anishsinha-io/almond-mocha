@@ -11,27 +11,19 @@ pub mod rng {
     }
 }
 
+/// Everything in this module is only used in tests so it's alright if we annotate things with
+/// #[allow(unused)] because they are not used in the app but are necessary in tests
 pub mod test_util {
-    // use lazy_static::lazy_static;
-    // use sqlx::{Pool, Postgres};
     use std::sync::Once;
 
-    // use crate::app::storage::postgres::create_pool;
-
+    #[allow(unused)]
     static INIT: Once = Once::new();
 
+    #[allow(unused)]
     pub fn init() {
         INIT.call_once(|| {
             dotenvy::dotenv().expect("error loading environment variables");
             let _ = env_logger::builder().is_test(true).try_init();
         });
     }
-
-    // lazy_static! {
-    //     static ref TEST_PG_POOL: Pool<Postgres> = {
-    //         tokio::runtime::Runtime::new()
-    //             .unwrap()
-    //             .block_on(async { create_pool(100).await.expect("error initializing pool") })
-    //     };
-    // }
 }

@@ -2,9 +2,9 @@ use actix_web::{
     middleware::{ErrorHandlers, Logger},
     web, App, HttpServer,
 };
-use app::{routes, state::AppState};
+use app::state::AppState;
 
-use crate::app::errors::AppError;
+use crate::app::{errors::AppError, routes};
 
 mod app;
 

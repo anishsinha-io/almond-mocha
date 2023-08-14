@@ -1,10 +1,7 @@
 use actix_multipart::Multipart;
-use actix_web::{
-    web::{Data, Json},
-    HttpResponse,
-};
+use actix_web::HttpResponse;
 
-use crate::app::{dto::posts::stickers::CreateSticker, errors::AppError, state::AppState, upload};
+use crate::app::{errors::AppError, upload};
 
 pub async fn create_sticker(payload: Multipart) -> actix_web::Result<HttpResponse, AppError> {
     let upload_status = upload::files::save_file_fs(payload).await;

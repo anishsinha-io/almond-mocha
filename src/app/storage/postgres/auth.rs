@@ -3,7 +3,8 @@ use uuid::Uuid;
 
 use crate::app::{
     dto::{CreateSession, DeleteSession, GetSessionById},
-    storage::{entities::Session, errors::StorageError},
+    entities::auth::Session,
+    storage::errors::StorageError,
 };
 
 pub async fn start_session(

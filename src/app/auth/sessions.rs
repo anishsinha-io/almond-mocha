@@ -1,7 +1,8 @@
 use crate::app::{
     config::StorageLayer,
     dto::{CreateSession, DeleteSession, GetSessionById},
-    storage::{entities::Session, postgres, redis},
+    entities::auth::Session,
+    storage::{postgres, redis},
 };
 use derive_more::Display;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};

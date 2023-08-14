@@ -1,6 +1,7 @@
 use crate::app::{
     dto::{DeleteSession, GetSessionById},
-    storage::{entities::Session, errors::StorageError},
+    entities::auth::Session,
+    storage::errors::StorageError,
 };
 use uuid::Uuid;
 

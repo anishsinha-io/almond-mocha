@@ -9,13 +9,14 @@ use actix_web::{
 
 use crate::app::{
     dto::{CreateSession, CreateUser, DeleteSession, GetUserByEmail, LoginUser, RegisterUser},
+    entities::auth::Session,
     errors::AppError,
     launch::LaunchMode,
     state::AppState,
-    storage::{entities::Session, postgres, users},
+    storage::{postgres, users},
 };
 
-use super::tokens::Claims;
+use crate::app::auth::tokens::Claims;
 
 pub async fn register(
     state: Data<AppState>,

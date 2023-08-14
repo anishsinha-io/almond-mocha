@@ -3,8 +3,8 @@ use actix_web::HttpMessage;
 use actix_web::{dev::ServiceRequest, web::Data};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 
+use crate::app::entities::auth::Session;
 use crate::app::state::AppState;
-use crate::app::storage::entities::Session;
 
 use super::tokens::{self, Claims};
 

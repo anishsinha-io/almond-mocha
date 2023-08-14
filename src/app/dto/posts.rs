@@ -1,12 +1,4 @@
 use serde::{Deserialize, Serialize};
-mod spaces;
-pub mod stickers;
-mod tags;
-
-pub use spaces::{CreateSpace, DeleteSpace, EditSpace, EditSpaceInfo, GetSpaceById};
-pub use tags::{
-    CreateTag, CreateTagInfo, DeleteTag, EditTag, EditTagInfo, GetTagById, GetTagsBySpace,
-};
 
 #[derive(Serialize, Deserialize)]
 pub struct GetPostById {
