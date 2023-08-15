@@ -6,36 +6,39 @@ pub mod files {
     use actix_web::web;
     use futures::{StreamExt, TryStreamExt};
 
-    use crate::app::{errors::AppError, types::AssetBackend};
+    use crate::app::{errors::AppError, types::AssetBackend, util};
 
-    // TODO: Remove unwrap when extracing file_name from content_type and add some safeguards
-    pub async fn save_file_fs(mut payload: Multipart) -> Result<(), Box<dyn Error + Send + Sync>> {
-        while let Ok(Some(mut field)) = payload.try_next().await {
-            let name = field.name();
-            log::debug!("{name}");
-            let content_type = field.content_disposition();
-            log::debug!("{content_type}");
-            let file_name = content_type.get_filename().unwrap();
+    pub async fn save_file_fs(
+        mut payload: Multipart,
+    ) -> Result<String, Box<dyn Error + Send + Sync>> {
+        Ok(loop {
+            if let Ok(Some(mut field)) = payload.try_next().await {
+                let content_type = field.content_disposition();
+                let file_name = content_type.get_filename().unwrap();
 
-            let filepath = format!("./src/app/assets/{file_name}");
+                let random_prefix = util::rng::random_string(8);
+                let filepath = format!("./src/app/assets/{random_prefix}-{file_name}");
+                let copy = filepath.clone();
+                let mut f = web::block(move || std::fs::File::create(copy)).await??;
 
-            let mut f = web::block(|| std::fs::File::create(filepath)).await??;
-
-            while let Some(chunk) = field.next().await {
-                if chunk.is_err() {
-                    Err(AppError::InternalServerError)?
-                };
-                let data = chunk.unwrap();
-                f = web::block(move || f.write_all(&data).map(|_| f)).await??;
+                while let Some(chunk) = field.next().await {
+                    match chunk {
+                        Ok(data) => f = web::block(move || f.write_all(&data).map(|_| f)).await??,
+                        Err(e) => {
+                            log::error!("error uploading image: {e}");
+                            Err(AppError::InternalServerError)?;
+                        }
+                    };
+                }
+                break filepath;
             }
-        }
-        Ok(())
+        })
     }
 
     pub async fn save_file(
         backend: AssetBackend,
         payload: Multipart,
-    ) -> Result<(), Box<dyn Error + Send + Sync>> {
+    ) -> Result<String, Box<dyn Error + Send + Sync>> {
         match backend {
             AssetBackend::Fs => save_file_fs(payload).await,
             AssetBackend::Aws => unimplemented!(),

@@ -160,6 +160,7 @@ create table if not exists stickers(
   user_id uuid not null references users(id) on delete cascade,
   backend asset_backend not null default 'fs' ::asset_backend,
   private boolean not null default false,
+  friendly_name text not null,
   file_path text not null,
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp
