@@ -4,7 +4,7 @@ use super::{
         CredentialManager,
     },
     config::{Config, StorageLayer},
-    dto::HashAlgorithm,
+    types::HashAlgorithm,
 };
 use std::env;
 

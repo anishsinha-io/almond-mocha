@@ -1,11 +1,19 @@
 use serde::{Deserialize, Serialize};
 
-use crate::app::dto::AssetBackend;
+use crate::app::types::AssetBackend;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateStickerInfo {
+    pub private: bool,
+    pub friendly_name: String,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateSticker {
-    pub backend: AssetBackend,
+    pub private: bool,
+    pub friendly_name: String,
     pub file_path: String,
+    pub backend: AssetBackend,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

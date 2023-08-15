@@ -1,6 +1,6 @@
 use crate::app::{
     config::StorageLayer,
-    dto::{CreateSession, DeleteSession, GetSessionById},
+    dto::auth::{CreateSession, DeleteSession, GetSessionById},
     entities::auth::Session,
     storage::{postgres, redis},
 };

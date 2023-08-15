@@ -8,12 +8,15 @@ use actix_web::{
 };
 
 use crate::app::{
-    dto::{CreateSession, CreateUser, DeleteSession, GetUserByEmail, LoginUser, RegisterUser},
+    dto::{
+        auth::{CreateSession, DeleteSession, LoginUser, RegisterUser},
+        users::{CreateUser, GetUserByEmail},
+    },
     entities::auth::Session,
     errors::AppError,
     launch::LaunchMode,
     state::AppState,
-    storage::{postgres, users},
+    storage::postgres,
 };
 
 use crate::app::auth::tokens::Claims;
@@ -51,7 +54,7 @@ pub async fn register(
         dto.algorithm = Some(alg);
     }
 
-    let new_user_id = users::create_user(&state.storage_layer.pg, dto)
+    let new_user_id = postgres::users::create_user(&state.storage_layer.pg, dto)
         .await
         .map_err(|_| AppError::InternalServerError)?;
 

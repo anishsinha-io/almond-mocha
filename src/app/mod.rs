@@ -9,6 +9,7 @@ mod pagination;
 pub mod routes;
 pub mod state;
 mod storage;
+pub mod types;
 pub mod upload;
 mod util;
 

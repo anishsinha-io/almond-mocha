@@ -8,7 +8,7 @@ pub enum HashAlgorithm {
     Bcrypt,
 }
 
-#[derive(sqlx::Type, Serialize, Deserialize, Debug, Clone)]
+#[derive(sqlx::Type, Serialize, Deserialize, Debug, Clone, Copy)]
 #[sqlx(type_name = "jen.asset_backend")]
 #[sqlx(rename_all = "lowercase")]
 pub enum AssetBackend {
@@ -16,4 +16,12 @@ pub enum AssetBackend {
     Aws,
     Gcp,
     Azure,
+}
+
+#[derive(sqlx::Type, Serialize, Deserialize, Debug, Clone, Copy)]
+#[sqlx(type_name = "jen.asset_backend")]
+#[sqlx(rename_all = "lowercase")]
+pub enum AssetVisibility {
+    Public,
+    Private,
 }

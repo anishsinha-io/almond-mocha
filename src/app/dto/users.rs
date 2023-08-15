@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::app::dto::HashAlgorithm;
+use crate::app::types::HashAlgorithm;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetUserById {

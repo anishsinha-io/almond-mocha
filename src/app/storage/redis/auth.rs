@@ -1,11 +1,9 @@
 use crate::app::{
-    dto::{DeleteSession, GetSessionById},
+    dto::auth::{CreateSession, DeleteSession, GetSessionById},
     entities::auth::Session,
     storage::errors::StorageError,
 };
 use uuid::Uuid;
-
-use crate::app::dto::CreateSession;
 
 use super::{delete, get_json, set_json, RedisConn};
 

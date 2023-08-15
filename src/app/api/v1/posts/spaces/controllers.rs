@@ -21,7 +21,7 @@ pub async fn create_space(
     data: Json<CreateSpace>,
 ) -> actix_web::Result<HttpResponse, AppError> {
     let dto = data.into_inner();
-    let _ = postgres::posts::spaces::create_space(&state.storage_layer.pg, dto)
+    let _ = postgres::spaces::create_space(&state.storage_layer.pg, dto)
         .await
         .map_err(|_| AppError::InternalServerError)?;
     Ok(HttpResponse::Ok().json(serde_json::json!({"msg": "successfully created new space"})))
@@ -35,7 +35,7 @@ pub async fn get_space(
         id: space.into_inner(),
     };
 
-    let space = postgres::posts::spaces::get_space_by_id(&state.storage_layer.pg, dto)
+    let space = postgres::spaces::get_space_by_id(&state.storage_layer.pg, dto)
         .await
         .map_err(|_| AppError::InternalServerError)?;
 
@@ -49,10 +49,9 @@ pub async fn get_spaces(
     state: Data<AppState>,
     pagination: Json<PaginationLimits<SpacePaginationOptions>>,
 ) -> actix_web::Result<HttpResponse, AppError> {
-    let spaces =
-        postgres::posts::spaces::get_spaces(&state.storage_layer.pg, pagination.into_inner())
-            .await
-            .map_err(|_| AppError::InternalServerError)?;
+    let spaces = postgres::spaces::get_spaces(&state.storage_layer.pg, pagination.into_inner())
+        .await
+        .map_err(|_| AppError::InternalServerError)?;
 
     Ok(HttpResponse::Ok().json(serde_json::json!({ "spaces": spaces })))
 }
@@ -69,7 +68,7 @@ pub async fn edit_space(
         space_name: data.space_name,
         bio: data.bio,
     };
-    postgres::posts::spaces::edit_space(&state.storage_layer.pg, dto)
+    postgres::spaces::edit_space(&state.storage_layer.pg, dto)
         .await
         .map_err(|_| AppError::InternalServerError)?;
     Ok(HttpResponse::Ok().json(serde_json::json!({"msg": "successfully edited space"})))
@@ -82,7 +81,7 @@ pub async fn delete_space(
     let dto = DeleteSpace {
         id: space.into_inner(),
     };
-    postgres::posts::spaces::delete_space(&state.storage_layer.pg, dto)
+    postgres::spaces::delete_space(&state.storage_layer.pg, dto)
         .await
         .map_err(|_| AppError::InternalServerError)?;
     Ok(HttpResponse::NoContent().finish())
@@ -99,7 +98,7 @@ pub async fn create_tag(
         name: info.name,
         description: info.description,
     };
-    let _ = postgres::posts::spaces::create_tag(&state.storage_layer.pg, dto)
+    let _ = postgres::spaces::create_tag(&state.storage_layer.pg, dto)
         .await
         .map_err(|_| AppError::InternalServerError)?;
     Ok(HttpResponse::Ok().json(serde_json::json!({"msg": "succesfully created new tag"})))
@@ -113,7 +112,7 @@ pub async fn get_tag(
         id: tag.into_inner(),
     };
 
-    let maybe_tag = postgres::posts::spaces::get_tag_by_id(&state.storage_layer.pg, dto)
+    let maybe_tag = postgres::spaces::get_tag_by_id(&state.storage_layer.pg, dto)
         .await
         .map_err(|_| AppError::InternalServerError)?;
     match maybe_tag {
@@ -127,7 +126,7 @@ pub async fn get_tags(
     space: Path<String>,
     pagination: Json<PaginationLimits<TagPaginationOptions>>,
 ) -> actix_web::Result<HttpResponse, AppError> {
-    let tags = postgres::posts::spaces::get_tags(
+    let tags = postgres::spaces::get_tags(
         &state.storage_layer.pg,
         GetTagsBySpace {
             space_id: space.into_inner(),
@@ -150,7 +149,7 @@ pub async fn edit_tag(
     data: Json<EditTagInfo>,
 ) -> actix_web::Result<HttpResponse, AppError> {
     let info = data.into_inner();
-    postgres::posts::spaces::edit_tag(
+    postgres::spaces::edit_tag(
         &state.storage_layer.pg,
         EditTag {
             id: tag.into_inner(),
@@ -170,7 +169,7 @@ pub async fn delete_tag(
     let dto = DeleteTag {
         id: tag.into_inner(),
     };
-    postgres::posts::spaces::delete_tag(&state.storage_layer.pg, dto)
+    postgres::spaces::delete_tag(&state.storage_layer.pg, dto)
         .await
         .map_err(|_| AppError::InternalServerError)?;
     Ok(HttpResponse::NoContent().finish())

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 
-use crate::app::dto::AssetBackend;
+use crate::app::types::AssetBackend;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Sticker {
