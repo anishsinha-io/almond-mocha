@@ -1,6 +1,6 @@
 ## Almond Milk and Mocha
 
-My blog with Jenny. Made with love, Rust and TypeScript.
+My blog with Jenny. Built with rust and typescript. Made with love.
 
 ### License
 
