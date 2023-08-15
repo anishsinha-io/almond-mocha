@@ -34,6 +34,12 @@ create type asset_backend as enum(
   'azure'
 );
 --
+-- asset_visibility type
+create type asset_visibility as enum(
+  'public',
+  'private'
+);
+--
 -- users table
 create table if not exists users(
   id uuid not null default uuid_generate_v4() primary key,
@@ -74,11 +80,25 @@ create or replace trigger update_spaces_timestamp
   before update on spaces for each row
   execute function update_timestamp();
 --
+-- assets table
+create table if not exists assets(
+  id uuid not null default uuid_generate_v4() primary key,
+  backend asset_backend not null default 'fs' ::asset_backend,
+  file_path text not null,
+  created_at timestamptz not null default current_timestamp,
+  updated_at timestamptz not null default current_timestamp,
+  unique (file_path)
+);
+create or replace trigger update_assets_timestamp
+  before update on assets for each row
+  execute function update_timestamp();
+--
 -- posts table
 create table if not exists posts(
   id uuid not null default uuid_generate_v4() primary key,
   user_id uuid not null references users(id) on delete cascade,
   space_id uuid not null references spaces(id) on delete cascade,
+  image_uri text not null,
   title text not null,
   content text not null,
   read_time int not null,
@@ -158,10 +178,9 @@ create or replace trigger update_user_permission_mappings_timestamp
 create table if not exists stickers(
   id uuid not null default uuid_generate_v4() primary key,
   user_id uuid not null references users(id) on delete cascade,
-  backend asset_backend not null default 'fs' ::asset_backend,
-  private boolean not null default false,
+  asset_id uuid not null references assets(id) on delete cascade,
+  visibility asset_visibility not null default 'private' ::asset_visibility,
   friendly_name text not null,
-  file_path text not null,
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp
 );

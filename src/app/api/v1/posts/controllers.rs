@@ -1,6 +1,6 @@
 use actix_multipart::Multipart;
 use actix_web::{
-    web::{Data, Form, Json},
+    web::{Data, Query},
     HttpResponse,
 };
 
@@ -14,14 +14,13 @@ use crate::app::{
 pub async fn create_sticker(
     state: Data<AppState>,
     payload: Multipart,
-    // data: Form<CreateStickerInfo>,
+    // data: Query<CreateStickerInfo>,
 ) -> actix_web::Result<HttpResponse, AppError> {
     let upload_status = upload::files::save_file_fs(payload).await;
     // let info = data.into_inner();
 
     match upload_status {
         Ok(_) => {
-            //
             // let dto = CreateSticker {
             //     friendly_name: info.friendly_name,
             //     private: info.private,

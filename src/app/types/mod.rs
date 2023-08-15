@@ -17,3 +17,11 @@ pub enum AssetBackend {
     Gcp,
     Azure,
 }
+
+#[derive(sqlx::Type, Serialize, Deserialize, Debug, Clone, Copy)]
+#[sqlx(type_name = "jen.asset_backend")]
+#[sqlx(rename_all = "lowercase")]
+pub enum AssetVisibility {
+    Public,
+    Private,
+}
