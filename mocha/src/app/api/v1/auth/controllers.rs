@@ -56,7 +56,10 @@ pub async fn register(
 
     let new_user_id = postgres::users::create_user(&state.storage_layer.pg, dto)
         .await
-        .map_err(|_| AppError::InternalServerError)?;
+        .map_err(|e| {
+            log::error!("{e}");
+            AppError::InternalServerError
+        })?;
 
     let session_id = state
         .session_manager
@@ -70,7 +73,10 @@ pub async fn register(
             },
         )
         .await
-        .map_err(|_| AppError::InternalServerError)?;
+        .map_err(|e| {
+            log::error!("HERE: {e}");
+            AppError::InternalServerError
+        })?;
 
     let session_cookie = state
         .session_manager
