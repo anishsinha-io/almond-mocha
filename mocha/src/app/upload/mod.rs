@@ -24,7 +24,7 @@ pub mod files {
                     field.content_disposition().get_name(),
                 ) {
                     let random_prefix = util::rng::random_string(12);
-                    let filepath = format!("./assets/{random_prefix}-{file_name}");
+                    let filepath = format!("../assets/{random_prefix}-{file_name}");
                     file_paths.push(AssetUpload {
                         file_path: filepath.to_owned(),
                         friendly_name: friendly_name.to_owned(),

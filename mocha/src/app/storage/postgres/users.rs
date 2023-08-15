@@ -11,16 +11,15 @@ pub async fn create_user<'a>(
 ) -> Result<String, Box<dyn Error + Send + Sync>> {
     let mut txn: Transaction<'_, Postgres> = executor.begin().await?;
 
-    let user = sqlx::query!(
+    let user: (Uuid,) = sqlx::query_as(
         r#"insert into jen.users (first_name, last_name, email, username, image_uri) values ($1, $2, $3, $4, $5) on conflict(email) do nothing returning id"#,
-        data.first_name, data.last_name, data.email, data.username,data.image_uri
-    )
+    ).bind(data.first_name).bind( data.last_name).bind( data.email).bind( data.username).bind(data.image_uri)
     .fetch_one(&mut *txn)
     .await?;
 
     if let (Some(hash), Some(alg)) = (data.hashed_password, data.algorithm) {
         sqlx::query(r#"insert into jen.user_credentials (user_id, credential_hash, alg) values ($1, $2, $3)"#)
-            .bind(user.id)
+            .bind(user.0)
             .bind(hash)
             .bind(alg)
             .execute(&mut *txn)
@@ -29,7 +28,7 @@ pub async fn create_user<'a>(
 
     txn.commit().await?;
 
-    Ok(user.id.to_string())
+    Ok(user.0.to_string())
 }
 
 pub async fn get_user_by_id<'a>(
