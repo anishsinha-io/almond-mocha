@@ -2,7 +2,7 @@ use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 use crate::app::{
-    dto::{CreateSession, DeleteSession, GetSessionById},
+    dto::auth::{CreateSession, DeleteSession, GetSessionById},
     entities::auth::Session,
     storage::errors::StorageError,
 };

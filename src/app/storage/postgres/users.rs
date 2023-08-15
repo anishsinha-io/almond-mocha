@@ -1,7 +1,7 @@
 use sqlx::{types::Uuid, Acquire, Executor, Postgres, Transaction};
 use std::error::Error;
 
-use crate::app::dto::{CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById};
+use crate::app::dto::users::{CreateUser, DeleteUser, EditUser, GetUserByEmail, GetUserById};
 use crate::app::entities::users::{User, UserWithCredentials};
 use crate::app::types::HashAlgorithm;
 

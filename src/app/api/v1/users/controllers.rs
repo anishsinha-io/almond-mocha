@@ -5,7 +5,7 @@ use actix_web::{
 
 use crate::app::{
     auth::tokens::Claims,
-    dto::{EditUser, EditUserInfo, GetUserById},
+    dto::users::{EditUser, EditUserInfo, GetUserById},
     errors::AppError,
     state::AppState,
     storage::postgres,

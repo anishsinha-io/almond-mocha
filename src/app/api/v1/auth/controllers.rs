@@ -8,7 +8,10 @@ use actix_web::{
 };
 
 use crate::app::{
-    dto::{CreateSession, CreateUser, DeleteSession, GetUserByEmail, LoginUser, RegisterUser},
+    dto::{
+        auth::{CreateSession, DeleteSession, LoginUser, RegisterUser},
+        users::{CreateUser, GetUserByEmail},
+    },
     entities::auth::Session,
     errors::AppError,
     launch::LaunchMode,
