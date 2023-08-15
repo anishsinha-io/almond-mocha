@@ -47,4 +47,4 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./src/app/assets:/var/www/static
+      - ./assets/:/var/www/static/

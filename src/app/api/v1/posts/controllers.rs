@@ -16,7 +16,7 @@ pub async fn create_sticker(
     payload: Multipart,
     // data: Query<CreateStickerInfo>,
 ) -> actix_web::Result<HttpResponse, AppError> {
-    let upload_status = upload::files::save_file_fs(payload).await;
+    let upload_status = upload::files::save_assets(state.config.asset_backend, payload).await;
     // let info = data.into_inner();
 
     match upload_status {
