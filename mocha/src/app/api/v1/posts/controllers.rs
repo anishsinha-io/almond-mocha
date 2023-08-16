@@ -1,12 +1,12 @@
 use actix_multipart::Multipart;
 use actix_web::{
-    web::{Data, ReqData},
+    web::{Data, Path, ReqData},
     HttpResponse,
 };
 
 use crate::app::{
     auth::tokens::Claims,
-    dto::stickers::{CreateSticker, CreateStickers},
+    dto::stickers::{CreateSticker, CreateStickers, GetAvailableStickers, GetStickersByUser},
     errors::AppError,
     state::AppState,
     storage::postgres,
@@ -51,4 +51,45 @@ pub async fn create_stickers(
             Err(AppError::InternalServerError)
         }
     }
+}
+
+pub async fn get_user_created_stickers(
+    state: Data<AppState>,
+    claims: ReqData<Claims>,
+) -> actix_web::Result<HttpResponse, AppError> {
+    let claim_data = claims.into_inner();
+    let dto = GetStickersByUser {
+        user_id: claim_data.sub,
+    };
+
+    let stickers = postgres::stickers::get_stickers_by_user(&state.storage_layer.pg, dto)
+        .await
+        .map_err(|_| AppError::InternalServerError)?;
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({ "stickers": stickers })))
+}
+
+pub async fn get_available_stickers(
+    state: Data<AppState>,
+    claims: ReqData<Claims>,
+) -> actix_web::Result<HttpResponse, AppError> {
+    let claim_data = claims.into_inner();
+    let dto = GetAvailableStickers {
+        user_id: claim_data.sub,
+    };
+
+    let stickers = postgres::stickers::get_available_stickers(&state.storage_layer.pg, dto)
+        .await
+        .map_err(|_| AppError::InternalServerError)?;
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({ "stickers": stickers })))
+}
+
+pub async fn edit_stickers(state: Data<AppState>, claims: ReqData<Claims>, sticker: Path<String>) {}
+
+pub async fn delete_stickers(
+    state: Data<AppState>,
+    claims: ReqData<Claims>,
+    sticker: Path<String>,
+) {
 }

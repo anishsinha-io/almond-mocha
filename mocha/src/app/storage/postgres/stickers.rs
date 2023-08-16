@@ -4,7 +4,8 @@ use uuid::Uuid;
 
 use crate::app::{
     dto::stickers::{
-        CreateStickers, DeleteSticker, EditSticker, GetStickerById, GetStickersByUser,
+        CreateStickers, DeleteSticker, EditSticker, GetAvailableStickers, GetStickerById,
+        GetStickersByUser,
     },
     entities::stickers::Sticker,
     types::{AssetBackend, AssetVisibility},
@@ -58,6 +59,35 @@ pub async fn get_sticker<'a>(
     .await?;
 
     Ok(sticker)
+}
+
+// TODO: Remove query_as_unchecked with something cleaner. This works and is fully correct,
+// but I really don't like that I have to use the unchecked version of the macro.
+pub async fn get_available_stickers<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
+    data: GetAvailableStickers,
+) -> Result<Vec<Sticker>, Box<dyn Error + Send + Sync>> {
+    let user_id = Uuid::parse_str(&data.user_id)?;
+
+    let stickers: Vec<Sticker> = sqlx::query_as_unchecked!(
+        Sticker,
+        r#"select stickers.id, user_id, asset_id, visibility as "visibility!: AssetVisibility", 
+           friendly_name, stickers.created_at, stickers.updated_at, assets.file_path, 
+           assets.backend as "backend!: AssetBackend" from jen.stickers join jen.assets on 
+           jen.stickers.asset_id=jen.assets.id and visibility='public'::jen.asset_visibility
+
+           union 
+
+           select stickers.id, user_id, asset_id, visibility as "visibility!: AssetVisibility", 
+           friendly_name, stickers.created_at, stickers.updated_at, assets.file_path, 
+           assets.backend as "backend!: AssetBackend" from jen.stickers join jen.assets on 
+           jen.stickers.asset_id=jen.assets.id and jen.stickers.user_id=$1
+           "#,
+        user_id
+    )
+    .fetch_all(executor)
+    .await?;
+    Ok(stickers)
 }
 
 pub async fn get_stickers_by_user<'a>(

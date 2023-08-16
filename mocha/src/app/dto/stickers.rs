@@ -48,3 +48,8 @@ pub struct EditSticker {
 pub struct DeleteSticker {
     pub id: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetAvailableStickers {
+    pub user_id: String,
+}

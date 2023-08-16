@@ -15,7 +15,12 @@ pub fn config(cfg: &mut ServiceConfig) {
             web::scope("/stickers")
                 .wrap(session)
                 .wrap(jwt)
-                .route("", web::post().to(controllers::create_stickers)),
+                .route("", web::get().to(controllers::get_user_created_stickers))
+                .route("", web::post().to(controllers::create_stickers))
+                .route(
+                    "/available",
+                    web::get().to(controllers::get_available_stickers),
+                ),
         ),
     );
 }
