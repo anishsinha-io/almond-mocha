@@ -13,7 +13,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./migrations/20230728043352_initial.up.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./mocha/migrations/20230728043352_initial.up.sql:/docker-entrypoint-initdb.d/init.sql
   pgadmin:
     container_name: jen-pgadmin
     image: dpage/pgadmin4
