@@ -1,4 +1,5 @@
 mod controllers;
+mod requests;
 mod spaces;
 
 use actix_web::web::{self, ServiceConfig};
@@ -17,6 +18,8 @@ pub fn config(cfg: &mut ServiceConfig) {
                 .wrap(jwt)
                 .route("", web::get().to(controllers::get_user_created_stickers))
                 .route("", web::post().to(controllers::create_stickers))
+                .route("/{sticker}", web::put().to(controllers::edit_sticker))
+                .route("/{sticker}", web::delete().to(controllers::delete_sticker))
                 .route(
                     "/available",
                     web::get().to(controllers::get_available_stickers),

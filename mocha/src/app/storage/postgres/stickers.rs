@@ -111,24 +111,31 @@ pub async fn get_stickers_by_user<'a>(
 pub async fn edit_sticker<'a>(
     executor: impl Executor<'a, Database = Postgres>,
     data: EditSticker,
-) -> Result<(), Box<dyn Error + Send + Sync>> {
+) -> Result<u64, Box<dyn Error + Send + Sync>> {
     let sticker_id = Uuid::parse_str(&data.id)?;
-    let sql = "update jen.stickers set visibility=$2, friendly_name=$3 where id=$1";
-    sqlx::query(sql)
-        .bind(sticker_id)
+    let user_id = Uuid::parse_str(&data.user_id)?;
+    let sql = "update jen.stickers set visibility=$1, friendly_name=$2 where id=$3 and user_id=$4 returning id";
+    let res = sqlx::query(sql)
         .bind(data.visibility)
         .bind(&data.friendly_name)
+        .bind(sticker_id)
+        .bind(user_id)
         .execute(executor)
         .await?;
-    Ok(())
+    Ok(res.rows_affected())
 }
 
 pub async fn delete_sticker<'a>(
     executor: impl Executor<'a, Database = Postgres>,
     data: DeleteSticker,
-) -> Result<(), Box<dyn Error + Send + Sync>> {
+) -> Result<u64, Box<dyn Error + Send + Sync>> {
     let id = Uuid::parse_str(&data.id)?;
-    let sql = "delete from jen.stickers where id=$1";
-    sqlx::query(sql).bind(id).execute(executor).await?;
-    Ok(())
+    let user_id = Uuid::parse_str(&data.user_id)?;
+    let sql = "delete from jen.stickers where id=$1 and user_id=$2";
+    let res = sqlx::query(sql)
+        .bind(id)
+        .bind(user_id)
+        .execute(executor)
+        .await?;
+    Ok(res.rows_affected())
 }

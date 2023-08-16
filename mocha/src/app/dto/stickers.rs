@@ -40,6 +40,7 @@ pub struct EditStickerInfo {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EditSticker {
     pub id: String,
+    pub user_id: String,
     pub visibility: AssetVisibility,
     pub friendly_name: String,
 }
@@ -47,6 +48,7 @@ pub struct EditSticker {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeleteSticker {
     pub id: String,
+    pub user_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

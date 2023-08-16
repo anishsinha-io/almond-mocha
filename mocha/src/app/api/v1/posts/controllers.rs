@@ -1,18 +1,23 @@
 use actix_multipart::Multipart;
 use actix_web::{
-    web::{Data, Path, ReqData},
+    web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
 
 use crate::app::{
     auth::tokens::Claims,
-    dto::stickers::{CreateSticker, CreateStickers, GetAvailableStickers, GetStickersByUser},
+    dto::stickers::{
+        CreateSticker, CreateStickers, DeleteSticker, EditSticker, GetAvailableStickers,
+        GetStickersByUser,
+    },
     errors::AppError,
     state::AppState,
     storage::postgres,
     types::AssetVisibility,
     upload,
 };
+
+use super::requests::EditStickerRequest;
 
 pub async fn create_stickers(
     state: Data<AppState>,
@@ -80,16 +85,55 @@ pub async fn get_available_stickers(
 
     let stickers = postgres::stickers::get_available_stickers(&state.storage_layer.pg, dto)
         .await
-        .map_err(|_| AppError::InternalServerError)?;
+        .map_err(|e| {
+            log::error!("{e}");
+            AppError::InternalServerError
+        })?;
 
     Ok(HttpResponse::Ok().json(serde_json::json!({ "stickers": stickers })))
 }
 
-pub async fn edit_stickers(state: Data<AppState>, claims: ReqData<Claims>, sticker: Path<String>) {}
-
-pub async fn delete_stickers(
+pub async fn edit_sticker(
     state: Data<AppState>,
     claims: ReqData<Claims>,
     sticker: Path<String>,
-) {
+    data: Json<EditStickerRequest>,
+) -> actix_web::Result<HttpResponse, AppError> {
+    let claim_data = claims.into_inner();
+    let info = data.into_inner();
+    let dto = EditSticker {
+        id: sticker.into_inner(),
+        user_id: claim_data.sub,
+        visibility: info.visibility,
+        friendly_name: info.friendly_name,
+    };
+
+    match postgres::stickers::edit_sticker(&state.storage_layer.pg, dto)
+        .await
+        .map_err(|e| {
+            log::error!("{e}");
+            AppError::InternalServerError
+        })? {
+        1 => Ok(HttpResponse::Ok().json(serde_json::json!({"msg": "successfully edited sticker"}))),
+        _ => Err(AppError::NotFound),
+    }
+}
+
+pub async fn delete_sticker(
+    state: Data<AppState>,
+    claims: ReqData<Claims>,
+    sticker: Path<String>,
+) -> actix_web::Result<HttpResponse, AppError> {
+    let claim_data = claims.into_inner();
+    let dto = DeleteSticker {
+        id: sticker.into_inner(),
+        user_id: claim_data.sub,
+    };
+    match postgres::stickers::delete_sticker(&state.storage_layer.pg, dto)
+        .await
+        .map_err(|_| AppError::InternalServerError)?
+    {
+        1 => Ok(HttpResponse::NoContent().finish()),
+        _ => Err(AppError::NotFound),
+    }
 }
