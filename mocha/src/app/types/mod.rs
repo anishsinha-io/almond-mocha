@@ -19,7 +19,7 @@ pub enum AssetBackend {
 }
 
 #[derive(sqlx::Type, Serialize, Deserialize, Debug, Clone, Copy)]
-#[sqlx(type_name = "jen.asset_backend")]
+#[sqlx(type_name = "jen.asset_visibility")]
 #[sqlx(rename_all = "lowercase")]
 pub enum AssetVisibility {
     Public,

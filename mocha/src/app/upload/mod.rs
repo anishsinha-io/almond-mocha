@@ -7,7 +7,9 @@ pub mod files {
     use futures::{StreamExt, TryStreamExt};
 
     use crate::app::{errors::AppError, types::AssetBackend, util};
+    use serde::{Deserialize, Serialize};
 
+    #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct AssetUpload {
         pub file_path: String,
         pub friendly_name: String,
@@ -16,8 +18,8 @@ pub mod files {
     async fn save_assets_fs(
         mut payload: Multipart,
     ) -> Result<Vec<AssetUpload>, Box<dyn Error + Send + Sync>> {
+        let mut file_paths = Vec::<AssetUpload>::new();
         let uploads = loop {
-            let mut file_paths = Vec::<AssetUpload>::new();
             if let Ok(Some(mut field)) = payload.try_next().await {
                 if let (Some(file_name), Some(friendly_name)) = (
                     field.content_disposition().get_filename(),
@@ -26,7 +28,7 @@ pub mod files {
                     let random_prefix = util::rng::random_string(12);
                     let filepath = format!("../assets/{random_prefix}-{file_name}");
                     file_paths.push(AssetUpload {
-                        file_path: filepath.to_owned(),
+                        file_path: format!("/{random_prefix}-{file_name}"),
                         friendly_name: friendly_name.to_owned(),
                     });
                     let copy = filepath.clone();
