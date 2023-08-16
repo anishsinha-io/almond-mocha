@@ -38,18 +38,12 @@ pub async fn create_stickers(
 
             let dto = CreateStickers { user_id, stickers };
 
-            // This is guaranteed to be Ok because if there were an error, map_err would propagate
-            // an internal server error, so calling unwrap is perfectly fine.
-            let new_sticker_ids = postgres::stickers::create_stickers(&state.storage_layer.pg, dto)
+            let _ = postgres::stickers::create_stickers(&state.storage_layer.pg, dto)
                 .await
                 .map_err(|_| AppError::InternalServerError);
 
             Ok(HttpResponse::Ok().json(serde_json::json!({
-                "msg":
-                    format!(
-                        "successfully created new sticker(s): {:#?}",
-                        new_sticker_ids.unwrap()
-                    )
+                "msg": format!("successfully created new sticker(s)",)
             })))
         }
         Err(e) => {
