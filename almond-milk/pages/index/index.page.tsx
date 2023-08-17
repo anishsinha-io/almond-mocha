@@ -1,6 +1,6 @@
-import { Counter } from './Counter'
+import { Counter } from "./Counter";
 
-export { Page }
+export { Page };
 
 function Page() {
   return (
@@ -11,8 +11,9 @@ function Page() {
         <li>Rendered to HTML.</li>
         <li>
           Interactive. <Counter />
+          Hi
         </li>
       </ul>
     </>
-  )
+  );
 }
