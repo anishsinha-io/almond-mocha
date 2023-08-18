@@ -68,6 +68,8 @@ create table if not exists user_credentials(
 create or replace trigger update_user_credentials_timestamp
   before update on user_credentials for each row
   execute function update_timestamp();
+--
+-- spaces table
 create table if not exists spaces(
   id uuid not null default uuid_generate_v4() primary key,
   space_name text not null,
@@ -102,6 +104,8 @@ create table if not exists posts(
   title text not null,
   content text not null,
   read_time int not null,
+  visibility asset_visibility not null default 'public' ::asset_visibility,
+  published boolean not null default false,
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp
 );
@@ -152,7 +156,6 @@ create table if not exists permissions(
   id uuid not null default uuid_generate_v4() primary key,
   permission_name text not null,
   permission_description text not null,
-  permission_scopes text[] not null default array[] ::text[],
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp,
   unique (permission_name)
@@ -161,17 +164,42 @@ create or replace trigger update_permissions_timestamp
   before update on permissions for each row
   execute function update_timestamp();
 --
--- user_permission_mappings table
-create table if not exists user_permission_mappings(
+-- roles table
+create table if not exists roles(
   id uuid not null default uuid_generate_v4() primary key,
-  user_id uuid not null references users(id) on delete cascade,
-  permission_id uuid not null references permissions(id) on delete cascade,
+  role_name text not null,
+  role_description text not null,
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp,
-  unique (user_id, permission_id)
+  unique (role_name)
 );
-create or replace trigger update_user_permission_mappings_timestamp
-  before update on user_permission_mappings for each row
+create or replace trigger update_roles_timestamp
+  before update on roles for each row
+  execute function update_timestamp();
+--
+-- role_permission_mappings table
+create table if not exists role_permission_mappings(
+  id uuid not null default uuid_generate_v4() primary key,
+  role_id uuid not null references roles(id) on delete cascade,
+  permission_id uuid not null references permissions(id) on delete cascade,
+  created_at timestamptz not null default current_timestamp,
+  updated_at timestamptz not null default current_timestamp
+);
+create or replace trigger update_role_permission_mappings_timestamp
+  before update on role_permission_mappings for each row
+  execute function update_timestamp();
+--
+-- user_role_mappings table
+create table if not exists user_role_mappings(
+  id uuid not null default uuid_generate_v4() primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  role_id uuid not null references roles(id) on delete cascade,
+  created_at timestamptz not null default current_timestamp,
+  updated_at timestamptz not null default current_timestamp,
+  unique (user_id, role_id)
+);
+create or replace trigger update_user_role_mappings_timestamp
+  before update on user_role_mappings for each row
   execute function update_timestamp();
 --
 -- stickers table
@@ -199,5 +227,8 @@ create table if not exists post_stickers(
 create or replace trigger update_post_stickers_timestamp
   before update on post_stickers for each row
   execute function update_timestamp();
+--
+-- create eversql recommended index to optimize role permissions select queries
+create index role_mappings_idx_role_id_permission_id on "jen"."role_permission_mappings"("role_id", "permission_id");
 commit;
 
