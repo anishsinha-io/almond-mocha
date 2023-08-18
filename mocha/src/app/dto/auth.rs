@@ -99,3 +99,32 @@ pub struct CreateRolePermissionMapping {
 pub struct GetRoleById {
     pub id: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EditRole {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeleteRole {
+    pub id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AttachInlinePermission {
+    pub id: String,
+    pub user_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AddRoleToUser {
+    pub id: String,
+    pub user_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetUserRbac {
+    pub user_id: String,
+}

@@ -1,15 +1,14 @@
-use chrono::{DateTime, Utc};
-use serde_json::Value;
 use sqlx::{Acquire, Executor, Postgres, QueryBuilder};
-use std::error::Error;
+use std::{collections::HashSet, error::Error};
 use uuid::Uuid;
 
 use crate::app::{
     dto::auth::{
-        CreatePermission, CreateRole, CreateSession, DeletePermission, DeleteSession,
-        EditPermission, GetPermissionById, GetRoleById, GetSessionById,
+        AddRoleToUser, AttachInlinePermission, CreatePermission, CreateRole, CreateSession,
+        DeletePermission, DeleteRole, DeleteSession, EditPermission, EditRole, GetPermissionById,
+        GetRoleById, GetSessionById, GetUserRbac,
     },
-    entities::auth::{Permission, Role, Session},
+    entities::auth::{Permission, Role, Session, UserRbac},
     storage::errors::StorageError,
 };
 
@@ -79,6 +78,25 @@ pub async fn create_permission<'a>(
         .fetch_one(executor)
         .await?;
     Ok(permission_id.to_string())
+}
+
+pub async fn create_permissions<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
+    data: Vec<CreatePermission>,
+) -> Result<Vec<String>, Box<dyn Error + Send + Sync>> {
+    let mut builder: QueryBuilder<Postgres> =
+        QueryBuilder::new("insert into jen.permissions (permission_name, permission_description)");
+    builder.push_values(data.into_iter(), |mut b, p| {
+        b.push_bind(p.name).push_bind(p.description);
+    });
+
+    builder.push("returning id");
+    let query = builder.build_query_as();
+    let rows: Vec<(Uuid,)> = query.fetch_all(executor).await?;
+
+    let new_permission_ids: Vec<String> = rows.into_iter().map(|r| r.0.to_string()).collect();
+
+    Ok(new_permission_ids)
 }
 
 pub async fn get_permission_by_id<'a>(
@@ -170,17 +188,14 @@ pub async fn get_role<'a>(
                role_permissions where (exists (select 1 from jen.role_permission_mappings 
                where (jen.role_permission_mappings.role_id=$1) and 
                (role_permissions.id = jen.role_permission_mappings.permission_id)))), '[]'::json) 
-			   as role_permissions) as permissions from jen.roles;";
-
-    type RoleTuple = (Uuid, String, String, DateTime<Utc>, DateTime<Utc>, Value);
+			   as role_permissions) as permissions from jen.roles where id=$1;";
 
     let role_id = Uuid::parse_str(&data.id)?;
-    let maybe_role: Option<RoleTuple> = sqlx::query_as(sql)
+    match sqlx::query_as(sql)
         .bind(role_id)
         .fetch_optional(executor)
-        .await?;
-
-    match maybe_role {
+        .await?
+    {
         Some((id, role_name, role_description, created_at, updated_at, permissions)) => {
             Ok(Some(Role {
                 id,
@@ -195,9 +210,147 @@ pub async fn get_role<'a>(
     }
 }
 
+pub async fn edit_role<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
+    data: EditRole,
+) -> Result<u64, Box<dyn Error + Send + Sync>> {
+    let sql = "update jen.roles set role_name=$1, role_description=$2 where id=$3";
+
+    let role_id = Uuid::parse_str(&data.id)?;
+    let res = sqlx::query(sql)
+        .bind(data.name)
+        .bind(data.description)
+        .bind(role_id)
+        .execute(executor)
+        .await?;
+    Ok(res.rows_affected())
+}
+
+pub async fn delete_role<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
+    data: DeleteRole,
+) -> Result<u64, Box<dyn Error + Send + Sync>> {
+    let sql = "delete from jen.roles where id=$1";
+
+    let role_id = Uuid::parse_str(&data.id)?;
+    let res = sqlx::query(sql).bind(role_id).execute(executor).await?;
+    Ok(res.rows_affected())
+}
+
+pub async fn attach_inline_permissions<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
+    data: Vec<AttachInlinePermission>,
+) -> Result<u64, Box<dyn Error + Send + Sync>> {
+    let mut builder: QueryBuilder<Postgres> =
+        QueryBuilder::new("insert into jen.user_permission_mappings (user_id, permission_id)");
+    builder.push_values(data.into_iter(), |mut b, mapping| {
+        if let (Ok(id), Ok(user_id)) = (
+            Uuid::parse_str(&mapping.id),
+            Uuid::parse_str(&mapping.user_id),
+        ) {
+            b.push_bind(user_id).push_bind(id);
+        }
+    });
+
+    let query = builder.build();
+    let res = query.execute(executor).await?;
+    Ok(res.rows_affected())
+}
+
+// TODO: Reevaluate this function and the one above (attach_inline_permissions). Currently the
+// behavior is to insert all valid mappings. I'm not sure how I feel about this (maybe any input
+// which contains any invalid mapping should fail?). Currently the function just ignores invalid
+// mappings.
+pub async fn add_roles_to_user<'a>(
+    executor: impl Executor<'a, Database = Postgres>,
+    data: Vec<AddRoleToUser>,
+) -> Result<u64, Box<dyn Error + Send + Sync>> {
+    let mut builder: QueryBuilder<Postgres> =
+        QueryBuilder::new("insert into jen.user_role_mappings (user_id, role_id)");
+    builder.push_values(data.into_iter(), |mut b, mapping| {
+        if let (Ok(id), Ok(user_id)) = (
+            Uuid::parse_str(&mapping.id),
+            Uuid::parse_str(&mapping.user_id),
+        ) {
+            b.push_bind(user_id).push_bind(id);
+        }
+    });
+    let query = builder.build();
+    let res = query.execute(executor).await?;
+    Ok(res.rows_affected())
+}
+
+pub async fn get_user_rbac<'a>(
+    executor: impl Executor<'a, Database = Postgres> + Acquire<'a, Database = Postgres>,
+    data: GetUserRbac,
+) -> Result<UserRbac, Box<dyn Error + Send + Sync>> {
+    let mut txn = executor.begin().await?;
+
+    let roles_query = "select role_id from jen.user_role_mappings where user_id=$1";
+    let user_id = Uuid::parse_str(&data.user_id)?;
+    let role_ids: Vec<(Uuid,)> = sqlx::query_as(roles_query)
+        .bind(user_id)
+        .fetch_all(&mut *txn)
+        .await?;
+
+    let role_membership: Vec<String> = role_ids
+        .iter()
+        .map(|(role_id,)| role_id.to_string())
+        .collect();
+
+    let mut permissions: Vec<(String, String)> = Vec::new();
+
+    for (role_id,) in role_ids {
+        if let Some(role) = get_role(
+            &mut *txn,
+            GetRoleById {
+                id: role_id.to_string(),
+            },
+        )
+        .await?
+        {
+            role.permissions.iter().for_each(|permission| {
+                permissions.push((
+                    permission.id.to_string(),
+                    permission.permission_name.to_owned(),
+                ))
+            });
+        };
+    }
+
+    let inline_permissions_query = "select permission_id, permissions.permission_name from 
+                                    jen.user_permission_mappings join jen.permissions on 
+                                    permission_id=permissions.id and 
+                                    user_permission_mappings.user_id=$1";
+
+    let inline_permissions: Vec<(Uuid, String)> = sqlx::query_as(inline_permissions_query)
+        .bind(user_id)
+        .fetch_all(&mut *txn)
+        .await?;
+
+    let mut permissions_set: HashSet<(Uuid, String)> = HashSet::new();
+
+    inline_permissions.into_iter().for_each(|(id, name)| {
+        permissions_set.insert((id, name));
+    });
+    permissions_set
+        .into_iter()
+        .for_each(|(id, name)| permissions.push((id.to_string(), name)));
+
+    txn.commit().await?;
+
+    Ok(UserRbac {
+        role_membership,
+        permissions,
+    })
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::app::{storage::postgres, util};
+    use crate::app::{
+        auth::CredentialManager, dto::users::CreateUser, storage::postgres, types::HashAlgorithm,
+        util,
+    };
 
     use super::*;
 
@@ -279,7 +432,6 @@ mod tests {
         )
         .await
         .unwrap();
-        println!("{new_role_id}");
 
         let role = get_role(
             &mut *txn,
@@ -291,6 +443,134 @@ mod tests {
         .unwrap();
         println!("{:#?}", role);
 
-        txn.commit().await.unwrap();
+        edit_role(
+            &mut *txn,
+            EditRole {
+                id: new_role_id.clone(),
+                name: "Admin".to_owned(),
+                description: "Default admin roles".to_owned(),
+            },
+        )
+        .await
+        .unwrap();
+
+        delete_role(
+            &mut *txn,
+            DeleteRole {
+                id: new_role_id.clone(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let nonexistent = get_role(
+            &mut *txn,
+            GetRoleById {
+                id: new_role_id.clone(),
+            },
+        )
+        .await
+        .unwrap();
+        assert!(nonexistent.is_none());
+
+        txn.rollback().await.unwrap();
+    }
+
+    #[tokio::test]
+    pub async fn test_rbac() {
+        util::test_util::init();
+        let pool = postgres::create_pool(5).await.unwrap();
+        let mut txn = pool.begin().await.unwrap();
+
+        let random_suffix = util::rng::random_string(4);
+
+        let email = format!("jennycho35-{random_suffix}@gmail.com");
+
+        let manager = CredentialManager::new(HashAlgorithm::Argon2);
+        let hash = manager.create_hash(b"jennysinha").unwrap();
+
+        let new_user = CreateUser {
+            first_name: "Jenny".to_owned(),
+            last_name: "Sinha".to_owned(),
+            email: email.clone(),
+            username: format!("jennysinha-{random_suffix}"),
+            image_uri: "https://assets.anishsinha.com/jenny".to_owned(),
+            hashed_password: Some(hash.to_owned()),
+            algorithm: Some(HashAlgorithm::Argon2),
+        };
+
+        let new_user = postgres::users::create_user(&mut *txn, new_user)
+            .await
+            .expect("error creating new user");
+
+        let new_permissions = create_permissions(
+            &mut *txn,
+            vec![
+                CreatePermission {
+                    name: "p1-name".to_owned(),
+                    description: "p1-bio".to_owned(),
+                },
+                CreatePermission {
+                    name: "p2-name".to_owned(),
+                    description: "p2-bio".to_owned(),
+                },
+                CreatePermission {
+                    name: "p3-name".to_owned(),
+                    description: "p3-bio".to_owned(),
+                },
+            ],
+        )
+        .await
+        .unwrap();
+
+        attach_inline_permissions(
+            &mut *txn,
+            new_permissions
+                .into_iter()
+                .map(|p| AttachInlinePermission {
+                    id: p,
+                    user_id: new_user.clone(),
+                })
+                .collect(),
+        )
+        .await
+        .unwrap();
+
+        let role = create_role(
+            &mut *txn,
+            CreateRole {
+                name: "r1".to_owned(),
+                description: "r1-bio".to_owned(),
+                permissions: vec![CreatePermission {
+                    name: "rp1".to_string(),
+                    description: "rp1-bio".to_string(),
+                }],
+            },
+        )
+        .await
+        .unwrap();
+
+        add_roles_to_user(
+            &mut *txn,
+            vec![AddRoleToUser {
+                id: role,
+                user_id: new_user.clone(),
+            }],
+        )
+        .await
+        .unwrap();
+
+        let rbac = get_user_rbac(
+            &mut *txn,
+            GetUserRbac {
+                user_id: new_user.clone(),
+            },
+        )
+        .await
+        .unwrap();
+
+        println!("{:#?}", rbac);
+
+        txn.rollback().await.unwrap();
     }
 }

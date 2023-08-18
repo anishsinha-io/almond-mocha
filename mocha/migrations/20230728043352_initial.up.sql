@@ -228,6 +228,19 @@ create or replace trigger update_post_stickers_timestamp
   before update on post_stickers for each row
   execute function update_timestamp();
 --
+-- create user_permission_mappings table
+create table if not exists user_permission_mappings(
+  id uuid not null default uuid_generate_v4() primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  permission_id uuid not null references permissions(id) on delete cascade,
+  created_at timestamptz not null default current_timestamp,
+  updated_at timestamptz not null default current_timestamp,
+  unique (user_id, permission_id)
+);
+create or replace trigger update_user_permission_mappings_timestamp
+  before update on user_permission_mappings for each row
+  execute function update_timestamp();
+--
 -- create eversql recommended index to optimize role permissions select queries
 create index role_mappings_idx_role_id_permission_id on "jen"."role_permission_mappings"("role_id", "permission_id");
 commit;

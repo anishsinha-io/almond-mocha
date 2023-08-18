@@ -13,6 +13,7 @@ pub mod rng {
 
 /// Everything in this module is only used in tests so it's alright if we annotate things with
 /// #[allow(unused)] because they are not used in the app but are necessary in tests
+#[cfg(test)]
 pub mod test_util {
     use std::sync::Once;
 
