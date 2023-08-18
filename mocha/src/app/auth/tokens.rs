@@ -5,6 +5,12 @@ use std::error::Error;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
+use crate::app::config::StorageLayer;
+use crate::app::dto::auth::GetUserRbac;
+use crate::app::entities::auth::UserRbac;
+use crate::app::storage::postgres;
+use crate::app::util;
+
 pub static ISS: &str = "milkandmocha";
 pub static AUD: &str = "milkandmocha";
 pub static ACCESS_TOKEN_LIFETIME: usize = 60 * 5;
@@ -19,6 +25,7 @@ pub struct Claims {
     pub iat: usize,
     pub exp: usize,
     pub nbf: usize,
+    pub rbac: UserRbac,
 }
 
 impl Claims {
@@ -32,18 +39,25 @@ impl Claims {
         Ok(token)
     }
 
-    pub fn default(sub: &str) -> Self {
-        let jti = Uuid::new_v4().to_string();
+    pub async fn new_signed(
+        storage_layer: &StorageLayer,
+        sub: &str,
+    ) -> Result<String, Box<dyn Error + Send + Sync>> {
+        let rbac = postgres::auth::get_user_rbac(
+            &storage_layer.pg,
+            GetUserRbac {
+                user_id: sub.to_owned(),
+            },
+        )
+        .await?;
 
-        let iat = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as usize;
+        let jti = Uuid::new_v4().to_string();
+        let iat = util::time::now();
 
         let nbf = iat;
         let exp = iat + ACCESS_TOKEN_LIFETIME;
 
-        Claims {
+        let claims = Claims {
             sub: sub.to_owned(),
             iss: ISS.to_owned(),
             aud: AUD.to_owned(),
@@ -51,7 +65,12 @@ impl Claims {
             iat,
             nbf,
             exp,
-        }
+            rbac,
+        };
+
+        let token = claims.sign_rs256()?;
+
+        Ok(token)
     }
 }
 
@@ -96,6 +115,11 @@ mod tests {
 
         let jti = Uuid::new_v4().to_string();
 
+        let rbac = UserRbac {
+            role_membership: vec![],
+            permissions: vec![],
+        };
+
         let claims = Claims {
             sub: "sub".to_owned(),
             iss: ISS.to_owned(),
@@ -104,6 +128,7 @@ mod tests {
             iat,
             exp,
             nbf,
+            rbac,
         };
 
         let _signed = claims.sign_rs256().unwrap();

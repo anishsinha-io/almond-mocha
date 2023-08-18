@@ -1,4 +1,5 @@
 pub mod rng {
+
     use rand::{distributions::Alphanumeric, Rng};
 
     #[inline]
@@ -8,6 +9,18 @@ pub mod rng {
             .take(len)
             .map(char::from)
             .collect()
+    }
+}
+
+pub mod time {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[inline(always)]
+    pub fn now() -> usize {
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as usize
     }
 }
 

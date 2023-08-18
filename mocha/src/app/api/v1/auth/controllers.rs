@@ -83,8 +83,8 @@ pub async fn register(
         .create_signed_cookie(&session_id)
         .map_err(|_| AppError::InternalServerError)?;
 
-    let access_token = Claims::default(&new_user_id.clone())
-        .sign_rs256()
+    let access_token = Claims::new_signed(&state.storage_layer, &new_user_id.clone())
+        .await
         .map_err(|_| AppError::InternalServerError)?;
 
     let mut res = HttpResponse::Ok().json(
@@ -124,9 +124,10 @@ pub async fn token(
                 .await
                 .map_err(|_| AppError::Unauthorized)?;
 
-            let access_token = Claims::default(&session.user_id.to_string())
-                .sign_rs256()
-                .map_err(|_| AppError::InternalServerError)?;
+            let access_token =
+                Claims::new_signed(&state.storage_layer, &session.user_id.to_string())
+                    .await
+                    .map_err(|_| AppError::InternalServerError)?;
 
             Ok(HttpResponse::Ok().json(serde_json::json!({ "access_token": access_token })))
         }
@@ -170,8 +171,8 @@ pub async fn login(
             let candidate = raw_data.password;
             let hash = user.credential_hash;
             if state.credential_manager.verify_hash(&candidate, &hash) {
-                let access_token = Claims::default(&user.id.to_string())
-                    .sign_rs256()
+                let access_token = Claims::new_signed(&state.storage_layer, &user.id.to_string())
+                    .await
                     .map_err(|_| AppError::InternalServerError)?;
 
                 let session_id = state

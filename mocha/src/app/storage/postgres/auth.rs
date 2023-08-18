@@ -298,7 +298,8 @@ pub async fn get_user_rbac<'a>(
         .map(|(role_id,)| role_id.to_string())
         .collect();
 
-    let mut permissions: Vec<(String, String)> = Vec::new();
+    // let mut permissions: Vec<(String, String)> = Vec::new();
+    let mut permissions_set: HashSet<(Uuid, String)> = HashSet::new();
 
     for (role_id,) in role_ids {
         if let Some(role) = get_role(
@@ -310,10 +311,7 @@ pub async fn get_user_rbac<'a>(
         .await?
         {
             role.permissions.iter().for_each(|permission| {
-                permissions.push((
-                    permission.id.to_string(),
-                    permission.permission_name.to_owned(),
-                ))
+                permissions_set.insert((permission.id, permission.permission_name.to_owned()));
             });
         };
     }
@@ -328,11 +326,11 @@ pub async fn get_user_rbac<'a>(
         .fetch_all(&mut *txn)
         .await?;
 
-    let mut permissions_set: HashSet<(Uuid, String)> = HashSet::new();
-
     inline_permissions.into_iter().for_each(|(id, name)| {
         permissions_set.insert((id, name));
     });
+
+    let mut permissions: Vec<(String, String)> = Vec::new();
     permissions_set
         .into_iter()
         .for_each(|(id, name)| permissions.push((id.to_string(), name)));
