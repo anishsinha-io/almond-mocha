@@ -3,6 +3,7 @@ use actix_web::{
     web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
+use actix_web_grants::proc_macro::has_permissions;
 
 use crate::app::{
     auth::tokens::Claims,
@@ -19,6 +20,7 @@ use crate::app::{
 
 use super::requests::EditStickerRequest;
 
+#[has_permissions("test-p1", "test-p2")]
 pub async fn create_stickers(
     state: Data<AppState>,
     payload: Multipart,
