@@ -2,7 +2,6 @@ use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, TokenData, Valid
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::error::Error;
-use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use crate::app::config::StorageLayer;
@@ -86,7 +85,10 @@ pub fn verify_rs256(token: &str) -> Result<TokenData<Claims>, Box<dyn Error + Se
 
 #[cfg(test)]
 mod tests {
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use std::{
+        collections::HashMap,
+        time::{SystemTime, UNIX_EPOCH},
+    };
 
     use uuid::Uuid;
 

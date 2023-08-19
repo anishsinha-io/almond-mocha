@@ -60,8 +60,6 @@ pub struct UserRoleMapping {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UserRbac {
+    pub permissions: Vec<String>,
     pub role_membership: Vec<String>,
-    pub permissions: Vec<(String, String)>,
 }
-
-impl UserRbac {}

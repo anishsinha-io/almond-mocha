@@ -20,7 +20,7 @@ use crate::app::{
 
 use super::requests::EditStickerRequest;
 
-#[has_permissions("test-p1", "test-p2")]
+#[has_permissions("stickers:create")]
 pub async fn create_stickers(
     state: Data<AppState>,
     payload: Multipart,
@@ -60,6 +60,7 @@ pub async fn create_stickers(
     }
 }
 
+#[has_permissions("stickers:get")]
 pub async fn get_user_created_stickers(
     state: Data<AppState>,
     claims: ReqData<Claims>,
@@ -76,6 +77,7 @@ pub async fn get_user_created_stickers(
     Ok(HttpResponse::Ok().json(serde_json::json!({ "stickers": stickers })))
 }
 
+#[has_permissions("stickers:get")]
 pub async fn get_available_stickers(
     state: Data<AppState>,
     claims: ReqData<Claims>,
@@ -95,6 +97,7 @@ pub async fn get_available_stickers(
     Ok(HttpResponse::Ok().json(serde_json::json!({ "stickers": stickers })))
 }
 
+#[has_permissions("stickers:edit")]
 pub async fn edit_sticker(
     state: Data<AppState>,
     claims: ReqData<Claims>,
@@ -121,6 +124,7 @@ pub async fn edit_sticker(
     }
 }
 
+#[has_permissions("stickers:delete")]
 pub async fn delete_sticker(
     state: Data<AppState>,
     claims: ReqData<Claims>,

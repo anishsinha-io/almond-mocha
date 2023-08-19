@@ -243,5 +243,173 @@ create or replace trigger update_user_permission_mappings_timestamp
 --
 -- create eversql recommended index to optimize role permissions select queries
 create index role_mappings_idx_role_id_permission_id on "jen"."role_permission_mappings"("role_id", "permission_id");
+--
+-- create initial permissions
+insert into jen.permissions(permission_name, permission_description)
+  values
+    -- profiles
+('profile:get', 'Allow a user to view their profile'),
+('profile:edit', 'Allow a user to edit their profile'),
+    -- tags
+    -- ('tags:get', 'Allow a user to view tags'),
+('tags:create', 'Allow a user to create new tags'),
+('tags:edit', 'Allow a user to edit existing tags'),
+('tags:delete', 'Allows a user to delete tags'),
+    -- spaces
+    -- ('spaces:get', 'Allow a user to view spaces'),
+('spaces:create', 'Allow a user to create new spaces'),
+('spaces:edit', 'Allow a user to edit existing spaces'),
+('spaces:delete', 'Allow a user to delete existing spaces'),
+    -- stickers
+('stickers:get', 'Allow a user to view available stickers'),
+('stickers:create', 'Allow a user to create new stickers'),
+('stickers:edit', 'Allow a user to edit existing stickers'),
+('stickers:delete', 'Allow a user to delete existing stickers'),
+    -- posts
+    -- ('posts:get', 'Allow a user to view spaces'),
+('posts:create', 'Allow a user to create new posts'),
+('posts:edit', 'Allow a user to edit their existing posts'),
+('posts:delete', 'Allow a user to delete their existing posts'),
+('posts:likes:create', 'Allow a user to like posts'),
+('posts:likes:get-count', 'Allow a user to view the amount of likes on a post'),
+('posts:likes:delete', 'Allow a user to remove their like from a post'),
+    -- comment
+('comments:get', 'Allow a user to view comments'),
+('comments:create', 'Allow a user to create new comments'),
+('comments:edit', 'Allow a user to edit their existing comments'),
+('comments:delete', 'Allow a user to delete their existing comments'),
+('comments:likes:get-count', 'Allow a user to view the number of likes on a comment'),
+('comments:likes:delete', 'Allow a user to remove their like from a comment'),
+('comments:likes:create', 'Allow a user to start or continue a comment thread');
+--
+-- create initial roles
+insert into jen.roles(role_name, role_description)
+  values
+    -- default
+('mocha-default', 'Default roles for a new user. This role is a container for several readonly permissions.'),
+    -- admin
+('mocha-admin', 'Role containing permissions for admin users.');
+--
+-- create utility to get the id of a role by its name
+create or replace function get_role_id(rname text)
+  returns uuid
+  as $$
+declare
+  role_id uuid;
+begin
+  role_id :=(
+    select
+      id
+    from
+      jen.roles
+    where
+      role_name = rname);
+  return role_id;
+end;
+$$
+language plpgsql;
+--
+-- create utility to get id of a permission by its name
+create or replace function get_permission_id(pname text)
+  returns uuid
+  as $$
+declare
+  permission_id uuid;
+begin
+  permission_id :=(
+    select
+      id
+    from
+      jen.permissions
+    where
+      permission_name = pname);
+  return permission_id;
+end;
+$$
+language plpgsql;
+--
+-- create role permission mappings
+insert into role_permission_mappings(role_id, permission_id)
+  values
+    --
+    -- default
+(get_role_id('mocha-default'), get_permission_id('posts:likes:create')),
+(get_role_id('mocha-default'), get_permission_id('posts:likes:get-count')),
+(get_role_id('mocha-default'), get_permission_id('posts:likes:delete')),
+(get_role_id('mocha-default'), get_permission_id('comments:get')),
+(get_role_id('mocha-default'), get_permission_id('comments:create')),
+(get_role_id('mocha-default'), get_permission_id('comments:edit')),
+(get_role_id('mocha-default'), get_permission_id('comments:delete')),
+(get_role_id('mocha-default'), get_permission_id('comments:likes:create')),
+(get_role_id('mocha-default'), get_permission_id('comments:likes:get-count')),
+    --
+    -- admin
+(get_role_id('mocha-admin'), get_permission_id('profile:get')),
+(get_role_id('mocha-admin'), get_permission_id('profile:edit')),
+    --
+(get_role_id('mocha-admin'), get_permission_id('tags:create')),
+(get_role_id('mocha-admin'), get_permission_id('tags:edit')),
+(get_role_id('mocha-admin'), get_permission_id('tags:delete')),
+    --
+(get_role_id('mocha-admin'), get_permission_id('spaces:create')),
+(get_role_id('mocha-admin'), get_permission_id('spaces:edit')),
+(get_role_id('mocha-admin'), get_permission_id('spaces:delete')),
+    --
+(get_role_id('mocha-admin'), get_permission_id('stickers:get')),
+(get_role_id('mocha-admin'), get_permission_id('stickers:create')),
+(get_role_id('mocha-admin'), get_permission_id('stickers:edit')),
+(get_role_id('mocha-admin'), get_permission_id('stickers:delete')),
+    --
+(get_role_id('mocha-admin'), get_permission_id('posts:create')),
+(get_role_id('mocha-admin'), get_permission_id('posts:edit')),
+(get_role_id('mocha-admin'), get_permission_id('posts:delete')),
+(get_role_id('mocha-admin'), get_permission_id('posts:likes:create')),
+(get_role_id('mocha-admin'), get_permission_id('posts:likes:get-count')),
+(get_role_id('mocha-admin'), get_permission_id('posts:likes:delete')),
+    --
+(get_role_id('mocha-admin'), get_permission_id('comments:get')),
+(get_role_id('mocha-admin'), get_permission_id('comments:create')),
+(get_role_id('mocha-admin'), get_permission_id('comments:edit')),
+(get_role_id('mocha-admin'), get_permission_id('comments:delete')),
+(get_role_id('mocha-admin'), get_permission_id('comments:likes:create')),
+(get_role_id('mocha-admin'), get_permission_id('comments:likes:get-count')),
+(get_role_id('mocha-admin'), get_permission_id('comments:likes:delete'));
+--
+-- some utility functions
+create or replace function jen.get_role_name(rid uuid)
+  returns text
+  as $$
+declare
+  rname text;
+begin
+  rname :=(
+    select
+      role_name
+    from
+      jen.roles
+    where
+      id = rid);
+  return rname;
+end;
+$$
+language plpgsql;
+--
+create or replace function jen.get_permission_name(pid uuid)
+  returns text
+  as $$
+declare
+  pname text;
+begin
+  pname :=(
+    select
+      permission_name
+    from
+      jen.permissions
+    where
+      id = pid);
+  return pname;
+end;
+$$
+language plpgsql;
 commit;
 

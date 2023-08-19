@@ -42,13 +42,7 @@ pub async fn jwt_guard(
     let result = tokens::verify_rs256(credentials.token());
     match result {
         Ok(jwt) => {
-            let permissions: &Vec<String> = &jwt
-                .claims
-                .rbac
-                .permissions
-                .iter()
-                .map(|(_, name)| name.to_owned())
-                .collect();
+            let permissions: &Vec<String> = &jwt.claims.rbac.permissions.clone();
             req.attach(permissions.clone());
             req.extensions_mut().insert::<Claims>(jwt.claims);
             Ok(req)

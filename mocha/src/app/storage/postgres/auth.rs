@@ -286,22 +286,22 @@ pub async fn get_user_rbac<'a>(
 ) -> Result<UserRbac, Box<dyn Error + Send + Sync>> {
     let mut txn = executor.begin().await?;
 
-    let roles_query = "select role_id from jen.user_role_mappings where user_id=$1";
+    // NOTE: jen.get_role_name is a plpgsql function that could be replaced by a subquery if
+    // database systems had to be migrated
+    let roles_query =
+        "select role_id, jen.get_role_name(role_id) as role_name from jen.user_role_mappings where user_id=$1";
     let user_id = Uuid::parse_str(&data.user_id)?;
-    let role_ids: Vec<(Uuid,)> = sqlx::query_as(roles_query)
+    let roles: Vec<(Uuid, String)> = sqlx::query_as(roles_query)
         .bind(user_id)
         .fetch_all(&mut *txn)
         .await?;
 
-    let role_membership: Vec<String> = role_ids
-        .iter()
-        .map(|(role_id,)| role_id.to_string())
-        .collect();
+    let role_membership = roles.iter().map(|(_, name)| name.clone()).collect();
 
     // let mut permissions: Vec<(String, String)> = Vec::new();
     let mut permissions_set: HashSet<(Uuid, String)> = HashSet::new();
 
-    for (role_id,) in role_ids {
+    for (role_id, _) in roles {
         if let Some(role) = get_role(
             &mut *txn,
             GetRoleById {
@@ -316,7 +316,7 @@ pub async fn get_user_rbac<'a>(
         };
     }
 
-    let inline_permissions_query = "select permission_id, permissions.permission_name from 
+    let inline_permissions_query = "select permission_id permission_name from 
                                     jen.user_permission_mappings join jen.permissions on 
                                     permission_id=permissions.id and 
                                     user_permission_mappings.user_id=$1";
@@ -330,10 +330,7 @@ pub async fn get_user_rbac<'a>(
         permissions_set.insert((id, name));
     });
 
-    let mut permissions: Vec<(String, String)> = Vec::new();
-    permissions_set
-        .into_iter()
-        .for_each(|(id, name)| permissions.push((id.to_string(), name)));
+    let permissions: Vec<String> = permissions_set.into_iter().map(|(_, name)| name).collect();
 
     txn.commit().await?;
 

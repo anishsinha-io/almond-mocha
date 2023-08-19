@@ -2,6 +2,7 @@ use actix_web::{
     web::{Data, Json, ReqData},
     HttpResponse,
 };
+use actix_web_grants::proc_macro::has_permissions;
 
 use crate::app::{
     auth::tokens::Claims,
@@ -11,6 +12,7 @@ use crate::app::{
     storage::postgres,
 };
 
+#[has_permissions("profile:get")]
 pub async fn get_current_user(
     state: Data<AppState>,
     claims: ReqData<Claims>,
@@ -31,6 +33,7 @@ pub async fn get_current_user(
     }
 }
 
+#[has_permissions("profile:edit")]
 pub async fn edit_current_user(
     state: Data<AppState>,
     claims: ReqData<Claims>,
