@@ -1,6 +1,7 @@
 use actix_web::error::ErrorUnauthorized;
 use actix_web::HttpMessage;
 use actix_web::{dev::ServiceRequest, web::Data};
+use actix_web_grants::permissions::AttachPermissions;
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 
 use crate::app::entities::auth::Session;
@@ -41,6 +42,8 @@ pub async fn jwt_guard(
     let result = tokens::verify_rs256(credentials.token());
     match result {
         Ok(jwt) => {
+            let permissions: &Vec<String> = &jwt.claims.rbac.permissions.clone();
+            req.attach(permissions.clone());
             req.extensions_mut().insert::<Claims>(jwt.claims);
             Ok(req)
         }

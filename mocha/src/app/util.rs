@@ -1,4 +1,5 @@
 pub mod rng {
+
     use rand::{distributions::Alphanumeric, Rng};
 
     #[inline]
@@ -11,8 +12,21 @@ pub mod rng {
     }
 }
 
+pub mod time {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[inline(always)]
+    pub fn now() -> usize {
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as usize
+    }
+}
+
 /// Everything in this module is only used in tests so it's alright if we annotate things with
 /// #[allow(unused)] because they are not used in the app but are necessary in tests
+#[cfg(test)]
 pub mod test_util {
     use std::sync::Once;
 

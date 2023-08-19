@@ -11,7 +11,7 @@ pub async fn create_user<'a>(
 ) -> Result<String, Box<dyn Error + Send + Sync>> {
     let mut txn: Transaction<'_, Postgres> = executor.begin().await?;
 
-    let user: (Uuid,) = sqlx::query_as(
+    let (user_id,): (Uuid,) = sqlx::query_as(
         r#"insert into jen.users (first_name, last_name, email, username, image_uri) values ($1, $2, $3, $4, $5) on conflict(email) do nothing returning id"#,
     ).bind(data.first_name).bind( data.last_name).bind( data.email).bind( data.username).bind(data.image_uri)
     .fetch_one(&mut *txn)
@@ -19,16 +19,26 @@ pub async fn create_user<'a>(
 
     if let (Some(hash), Some(alg)) = (data.hashed_password, data.algorithm) {
         sqlx::query(r#"insert into jen.user_credentials (user_id, credential_hash, alg) values ($1, $2, $3)"#)
-            .bind(user.0)
+            .bind(user_id)
             .bind(hash)
             .bind(alg)
             .execute(&mut *txn)
             .await?;
     }
 
+    // NOTE: jen.get_role_id is a plpgsql function that returns the id of a role given its name.
+    // this could be replaced by a subquery if necessary (for example if we switched databases to
+    // something that didn't support plpgsql)
+    let role_query = "insert into jen.user_role_mappings (user_id, role_id) values ($1, jen.get_role_id('mocha-default'))";
+
+    sqlx::query(role_query)
+        .bind(user_id)
+        .execute(&mut *txn)
+        .await?;
+
     txn.commit().await?;
 
-    Ok(user.0.to_string())
+    Ok(user_id.to_string())
 }
 
 pub async fn get_user_by_id<'a>(

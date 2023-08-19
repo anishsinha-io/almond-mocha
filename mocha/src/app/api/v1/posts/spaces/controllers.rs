@@ -2,6 +2,7 @@ use actix_web::{
     web::{Data, Json, Path},
     HttpResponse,
 };
+use actix_web_grants::proc_macro::has_permissions;
 
 use crate::app::{
     dto::{
@@ -16,6 +17,7 @@ use crate::app::{
     storage::postgres,
 };
 
+#[has_permissions("spaces:create")]
 pub async fn create_space(
     state: Data<AppState>,
     data: Json<CreateSpace>,
@@ -56,6 +58,7 @@ pub async fn get_spaces(
     Ok(HttpResponse::Ok().json(serde_json::json!({ "spaces": spaces })))
 }
 
+#[has_permissions("spaces:edit")]
 pub async fn edit_space(
     state: Data<AppState>,
     space: Path<String>,
@@ -74,6 +77,7 @@ pub async fn edit_space(
     Ok(HttpResponse::Ok().json(serde_json::json!({"msg": "successfully edited space"})))
 }
 
+#[has_permissions("spaces:delete")]
 pub async fn delete_space(
     state: Data<AppState>,
     space: Path<String>,
@@ -87,6 +91,7 @@ pub async fn delete_space(
     Ok(HttpResponse::NoContent().finish())
 }
 
+#[has_permissions("tags:create")]
 pub async fn create_tag(
     state: Data<AppState>,
     space: Path<String>,
@@ -143,6 +148,7 @@ pub async fn get_tags(
     }
 }
 
+#[has_permissions("tags:edit")]
 pub async fn edit_tag(
     state: Data<AppState>,
     tag: Path<String>,
@@ -162,6 +168,7 @@ pub async fn edit_tag(
     Ok(HttpResponse::Ok().json(serde_json::json!({"msg": "tag successfully edited"})))
 }
 
+#[has_permissions("tags:delete")]
 pub async fn delete_tag(
     state: Data<AppState>,
     tag: Path<String>,

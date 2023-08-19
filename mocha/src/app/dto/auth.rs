@@ -59,3 +59,72 @@ pub struct UpdateSessionState {
     pub id: String,
     pub session_state: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreatePermission {
+    pub name: String,
+    pub description: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetPermissionById {
+    pub id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EditPermission {
+    pub id: String,
+    pub description: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeletePermission {
+    pub id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateRole {
+    pub name: String,
+    pub description: String,
+    pub permissions: Vec<CreatePermission>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateRolePermissionMapping {
+    pub role_id: String,
+    pub permission_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetRoleById {
+    pub id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EditRole {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeleteRole {
+    pub id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AttachInlinePermission {
+    pub id: String,
+    pub user_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AddRoleToUser {
+    pub id: String,
+    pub user_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetUserRbac {
+    pub user_id: String,
+}
