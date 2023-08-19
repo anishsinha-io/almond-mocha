@@ -316,7 +316,7 @@ pub async fn get_user_rbac<'a>(
         };
     }
 
-    let inline_permissions_query = "select permission_id permission_name from 
+    let inline_permissions_query = "select permission_id, permission_name from 
                                     jen.user_permission_mappings join jen.permissions on 
                                     permission_id=permissions.id and 
                                     user_permission_mappings.user_id=$1";
@@ -358,8 +358,8 @@ mod tests {
         let new_permission_id = create_permission(
             &mut *txn,
             CreatePermission {
-                name: "posts:create".to_owned(),
-                description: "allow a user to create a post".to_owned(),
+                name: "test1".to_owned(),
+                description: "test permission".to_owned(),
             },
         )
         .await
@@ -415,11 +415,11 @@ mod tests {
                 description: "default admin roles".to_owned(),
                 permissions: vec![
                     CreatePermission {
-                        name: "posts:create".to_owned(),
+                        name: "test1".to_owned(),
                         description: "permission required to create a post".to_owned(),
                     },
                     CreatePermission {
-                        name: "posts:delete".to_owned(),
+                        name: "test2".to_owned(),
                         description: "permission required to delete a post".to_owned(),
                     },
                 ],
