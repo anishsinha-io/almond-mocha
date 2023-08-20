@@ -515,6 +515,7 @@ mod tests {
             last_name: "Sinha".to_owned(),
             email: email.clone(),
             username: format!("jennysinha-{random_suffix}"),
+            bio: "amazing programmer and musician".to_owned(),
             image_uri: "https://assets.anishsinha.com/jenny".to_owned(),
             hashed_password: Some(hash.to_owned()),
             algorithm: Some(HashAlgorithm::Argon2),

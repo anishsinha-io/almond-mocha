@@ -13,6 +13,7 @@ pub struct User {
     pub last_name: String,
     pub email: String,
     pub username: String,
+    pub bio: String,
     pub image_uri: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

@@ -9,6 +9,7 @@ pub struct RegisterUser {
     pub last_name: String,
     pub email: String,
     pub username: String,
+    pub bio: String,
     pub image_uri: String,
     pub password: Option<String>,
 }

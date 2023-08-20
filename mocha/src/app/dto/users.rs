@@ -19,6 +19,7 @@ pub struct CreateUser {
     pub last_name: String,
     pub email: String,
     pub username: String,
+    pub bio: String,
     pub image_uri: String,
     pub hashed_password: Option<String>,
     pub algorithm: Option<HashAlgorithm>,

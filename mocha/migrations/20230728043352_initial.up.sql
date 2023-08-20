@@ -47,6 +47,7 @@ create table if not exists users(
   last_name text not null,
   email text not null,
   username text not null,
+  bio text not null,
   image_uri text not null,
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp,

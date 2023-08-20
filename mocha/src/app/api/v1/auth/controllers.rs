@@ -40,6 +40,7 @@ pub async fn register(
         last_name: raw_data.last_name,
         email: raw_data.email,
         username: raw_data.username,
+        bio: raw_data.bio,
         image_uri: raw_data.image_uri,
         hashed_password: None,
         algorithm: None,

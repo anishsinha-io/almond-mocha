@@ -10,7 +10,9 @@ import { renderPage } from "vite-plugin-ssr/server";
 import { root } from "./root.js";
 const isProduction = process.env.NODE_ENV === "production";
 
-startServer();
+startServer().catch((e) => {
+  console.log(e);
+});
 
 async function startServer() {
   const app = express();
@@ -43,18 +45,21 @@ async function startServer() {
 
   // Vite-plugin-ssr middleware. It should always be our last middleware (because it's a
   // catch-all middleware superseding any middleware placed after it).
-  app.get("*", async (req, res, next) => {
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  app.get("*", async (req, res, next): Promise<void> => {
     const pageContextInit = {
       urlOriginal: req.originalUrl,
     };
     const pageContext = await renderPage(pageContextInit);
     const { httpResponse } = pageContext;
     if (!httpResponse) {
-      return next();
+      next();
+      return;
     } else {
       const { body, statusCode, headers, earlyHints } = httpResponse;
-      if (res.writeEarlyHints)
-        res.writeEarlyHints({ link: earlyHints.map((e) => e.earlyHintLink) });
+      // if (res.writeEarlyHints)
+      res.writeEarlyHints({ link: earlyHints.map((e) => e.earlyHintLink) });
       headers.forEach(([name, value]) => res.setHeader(name, value));
       res.status(statusCode);
       // For HTTP streams use httpResponse.pipe() instead, see https://vite-plugin-ssr.com/stream
@@ -62,7 +67,7 @@ async function startServer() {
     }
   });
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT ?? 3000;
   app.listen(port);
   console.log(`Server running at http://localhost:${port}`);
 }

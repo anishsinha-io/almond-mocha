@@ -12,8 +12,15 @@ pub async fn create_user<'a>(
     let mut txn: Transaction<'_, Postgres> = executor.begin().await?;
 
     let (user_id,): (Uuid,) = sqlx::query_as(
-        r#"insert into jen.users (first_name, last_name, email, username, image_uri) values ($1, $2, $3, $4, $5) on conflict(email) do nothing returning id"#,
-    ).bind(data.first_name).bind( data.last_name).bind( data.email).bind( data.username).bind(data.image_uri)
+        r#"insert into jen.users (first_name, last_name, email, username, bio, image_uri) values 
+        ($1, $2, $3, $4, $5, $6) on conflict(email) do nothing returning id"#,
+    )
+    .bind(data.first_name)
+    .bind(data.last_name)
+    .bind(data.email)
+    .bind(data.username)
+    .bind(data.bio)
+    .bind(data.image_uri)
     .fetch_one(&mut *txn)
     .await?;
 
@@ -46,7 +53,7 @@ pub async fn get_user_by_id<'a>(
     data: GetUserById,
 ) -> Result<Option<User>, Box<dyn Error + Send + Sync>> {
     let id = Uuid::parse_str(&data.id)?;
-    let user = sqlx::query_as!(User, r#"select id, first_name, last_name, email, username, image_uri, created_at, updated_at from jen.users where id=$1"#, id).fetch_optional(executor).await?;
+    let user = sqlx::query_as!(User, r#"select id, first_name, last_name, email, username, bio, image_uri, created_at, updated_at from jen.users where id=$1"#, id).fetch_optional(executor).await?;
     Ok(user)
 }
 
@@ -55,7 +62,7 @@ pub async fn get_user_by_email<'a>(
     executor: impl Executor<'a, Database = Postgres>,
     data: GetUserByEmail,
 ) -> Result<Option<User>, Box<dyn Error + Send + Sync>> {
-    let user = sqlx::query_as!(User, r#"select id, first_name, last_name, email, username, image_uri, created_at, updated_at from jen.users where email=$1"#, data.email).fetch_optional(executor).await?;
+    let user = sqlx::query_as!(User, r#"select id, first_name, last_name, email, username, bio, image_uri, created_at, updated_at from jen.users where email=$1"#, data.email).fetch_optional(executor).await?;
     Ok(user)
 }
 
@@ -144,6 +151,7 @@ mod tests {
             last_name: "Sinha".to_owned(),
             email: email.clone(),
             username: format!("jennysinha-{random_suffix}"),
+            bio: "amazing programmer and pianist".to_owned(),
             image_uri: "https://assets.anishsinha.com/jenny".to_owned(),
             hashed_password: Some(hash.to_owned()),
             algorithm: Some(HashAlgorithm::Argon2),

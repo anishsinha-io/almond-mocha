@@ -1,4 +1,7 @@
 /* This CSS is common to all pages */
+@tailwind base;
+@tailwing components;
+@tailwind utilities;
 
 body {
   margin: 0;
