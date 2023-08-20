@@ -411,5 +411,48 @@ begin
 end;
 $$
 language plpgsql;
+--
+create or replace function jen.get_user_permissions(_user_id uuid)
+  returns jen.permissions[]
+  as $$
+declare
+  role_ids uuid[];
+  declare loop_permissions jen.permissions[];
+  declare permissions jen.permissions[] = '{}'::jen.permissions[];
+  declare _role_id uuid;
+begin
+  select
+    array (
+      select
+        role_id
+      from
+        jen.user_role_mappings
+      where
+        user_role_mappings.user_id = _user_id) into role_ids;
+  raise notice 'role_ids: %', role_ids;
+  foreach _role_id in array role_ids loop
+    raise notice '%', _role_id;
+    select
+      array_agg(x)
+    from (
+      select
+        permissions.id,
+        permission_name,
+        permission_description,
+        permissions.created_at,
+        permissions.updated_at
+      from
+        jen.role_permission_mappings
+        join jen.permissions on permissions.id = role_permission_mappings.permission_id
+          and role_permission_mappings.role_id = _role_id) x into loop_permissions;
+    raise notice '%', loop_permissions;
+    select
+      array_cat(permissions, loop_permissions) into permissions;
+  end loop;
+  return permissions;
+end;
+$$
+language plpgsql;
+--
 commit;
 
