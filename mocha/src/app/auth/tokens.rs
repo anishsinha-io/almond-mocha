@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::app::config::StorageLayer;
 use crate::app::dto::auth::GetUserRbac;
-use crate::app::entities::auth::UserRbac;
+use crate::app::entities::auth::{UserAccess, UserRbac};
 use crate::app::storage::postgres;
 use crate::app::util;
 
@@ -14,6 +14,25 @@ pub static ISS: &str = "milkandmocha";
 pub static AUD: &str = "milkandmocha";
 pub static ACCESS_TOKEN_LIFETIME: usize = 60 * 5;
 // pub static REFRESH_TOKEN_LIFETIME: usize = 60 * 60 * 24 * 30 * 3;
+//
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserAccessInfo {
+    pub roles: Vec<String>,
+    pub permissions: Vec<String>,
+}
+
+impl From<UserAccess> for UserAccessInfo {
+    fn from(value: UserAccess) -> Self {
+        UserAccessInfo {
+            roles: value.roles.iter().map(|r| r.role_name.to_owned()).collect(),
+            permissions: value
+                .permissions
+                .iter()
+                .map(|p| p.permission_name.to_owned())
+                .collect(),
+        }
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -24,7 +43,7 @@ pub struct Claims {
     pub iat: usize,
     pub exp: usize,
     pub nbf: usize,
-    pub rbac: UserRbac,
+    pub access: UserAccessInfo,
 }
 
 impl Claims {
@@ -50,6 +69,14 @@ impl Claims {
         )
         .await?;
 
+        let access = postgres::auth::get_user_access(
+            &storage_layer.pg,
+            GetUserRbac {
+                user_id: sub.to_owned(),
+            },
+        )
+        .await?;
+
         let jti = Uuid::new_v4().to_string();
         let iat = util::time::now();
 
@@ -64,7 +91,7 @@ impl Claims {
             iat,
             nbf,
             exp,
-            rbac,
+            access: UserAccessInfo::from(access),
         };
 
         let token = claims.sign_rs256()?;
@@ -85,10 +112,7 @@ pub fn verify_rs256(token: &str) -> Result<TokenData<Claims>, Box<dyn Error + Se
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        collections::HashMap,
-        time::{SystemTime, UNIX_EPOCH},
-    };
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     use uuid::Uuid;
 
@@ -117,8 +141,8 @@ mod tests {
 
         let jti = Uuid::new_v4().to_string();
 
-        let rbac = UserRbac {
-            role_membership: vec![],
+        let access = UserAccess {
+            roles: vec![],
             permissions: vec![],
         };
 
@@ -130,7 +154,7 @@ mod tests {
             iat,
             exp,
             nbf,
-            rbac,
+            access: UserAccessInfo::from(access),
         };
 
         let _signed = claims.sign_rs256().unwrap();

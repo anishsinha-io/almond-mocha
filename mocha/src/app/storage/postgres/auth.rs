@@ -1,3 +1,4 @@
+use serde_json::Value;
 use sqlx::{Acquire, Executor, Postgres, QueryBuilder};
 use std::{collections::HashSet, error::Error};
 use uuid::Uuid;
@@ -8,7 +9,7 @@ use crate::app::{
         DeletePermission, DeleteRole, DeleteSession, EditPermission, EditRole, GetPermissionById,
         GetRoleById, GetSessionById, GetUserRbac,
     },
-    entities::auth::{Permission, Role, Session, UserRbac},
+    entities::auth::{Permission, Role, RoleWithPermissions, Session, UserAccess, UserRbac},
     storage::errors::StorageError,
 };
 
@@ -182,7 +183,7 @@ pub async fn create_role<'a>(
 pub async fn get_role<'a>(
     executor: impl Executor<'a, Database = Postgres>,
     data: GetRoleById,
-) -> Result<Option<Role>, Box<dyn Error + Send + Sync>> {
+) -> Result<Option<RoleWithPermissions>, Box<dyn Error + Send + Sync>> {
     let sql = "select id, role_name, role_description, created_at, updated_at,
                (select coalesce((select json_agg(role_permissions) from jen.permissions 
                role_permissions where (exists (select 1 from jen.role_permission_mappings 
@@ -197,7 +198,7 @@ pub async fn get_role<'a>(
         .await?
     {
         Some((id, role_name, role_description, created_at, updated_at, permissions)) => {
-            Ok(Some(Role {
+            Ok(Some(RoleWithPermissions {
                 id,
                 role_name,
                 role_description,
@@ -278,6 +279,31 @@ pub async fn add_roles_to_user<'a>(
     let query = builder.build();
     let res = query.execute(executor).await?;
     Ok(res.rows_affected())
+}
+
+pub async fn get_user_access<'a>(
+    executor: impl Executor<'a, Database = Postgres> + Acquire<'a, Database = Postgres>,
+    data: GetUserRbac,
+) -> Result<UserAccess, Box<dyn Error + Send + Sync>> {
+    let sql = "select array_to_json(
+	            (select array_agg(user_roles) from (
+		            select role_id as id, roles.role_name, roles.role_description, roles.created_at, roles.updated_at from 
+		            jen.user_role_mappings join 
+		            jen.roles on roles.id=role_id and 
+		            user_id=$1
+	            ) user_roles)
+               )::jsonb as roles, array_to_json(jen.get_user_permissions($1))::jsonb as permissions;";
+
+    let user_id = Uuid::parse_str(&data.user_id)?;
+    let (json_roles, json_permissions): (Value, Value) = sqlx::query_as(sql)
+        .bind(user_id)
+        .fetch_one(executor)
+        .await?;
+
+    let roles = serde_json::from_value::<Vec<Role>>(json_roles)?;
+    let permissions = serde_json::from_value::<Vec<Permission>>(json_permissions)?;
+
+    Ok(UserAccess { roles, permissions })
 }
 
 pub async fn get_user_rbac<'a>(
@@ -564,7 +590,15 @@ mod tests {
         .await
         .unwrap();
 
-        println!("{:#?}", rbac);
+        let access = get_user_access(
+            &mut *txn,
+            GetUserRbac {
+                user_id: new_user.clone(),
+            },
+        )
+        .await
+        .unwrap();
+        println!("{:#?}", access);
 
         txn.rollback().await.unwrap();
     }

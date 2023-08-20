@@ -26,6 +26,15 @@ pub struct Role {
     pub id: Uuid,
     pub role_name: String,
     pub role_description: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RoleWithPermissions {
+    pub id: Uuid,
+    pub role_name: String,
+    pub role_description: String,
     pub permissions: Vec<Permission>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -62,4 +71,10 @@ pub struct UserRoleMapping {
 pub struct UserRbac {
     pub permissions: Vec<String>,
     pub role_membership: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct UserAccess {
+    pub roles: Vec<Role>,
+    pub permissions: Vec<Permission>,
 }
