@@ -7,9 +7,12 @@ use actix_web_grants::proc_macro::has_permissions;
 
 use crate::app::{
     auth::tokens::Claims,
-    dto::stickers::{
-        CreateSticker, CreateStickers, DeleteSticker, EditSticker, GetAvailableStickers,
-        GetStickersByUser,
+    dto::{
+        posts::CreateOrSaveDraft,
+        stickers::{
+            CreateSticker, CreateStickers, DeleteSticker, EditSticker, GetAvailableStickers,
+            GetStickersByUser,
+        },
     },
     errors::AppError,
     state::AppState,
@@ -18,7 +21,28 @@ use crate::app::{
     upload,
 };
 
-use super::requests::EditStickerRequest;
+use super::requests::{CreateOrSaveDraftReq, EditStickerReq};
+
+#[has_permissions("posts:create", "posts:edit")]
+pub async fn create_or_save_draft(
+    state: Data<AppState>,
+    claims: ReqData<Claims>,
+    data: Json<CreateOrSaveDraftReq>,
+) {
+    let info = data.into_inner();
+    let claims_data = claims.into_inner();
+    let user_id = claims_data.sub;
+    let dto = CreateOrSaveDraft {
+        id: info.id,
+        user_id,
+        space_id: info.space_id,
+        title: info.title,
+        content: info.content,
+        visibility: info.visibility,
+        tags: info.tags,
+        read_time: info.read_time,
+    };
+}
 
 #[has_permissions("stickers:create")]
 pub async fn create_stickers(
@@ -102,7 +126,7 @@ pub async fn edit_sticker(
     state: Data<AppState>,
     claims: ReqData<Claims>,
     sticker: Path<String>,
-    data: Json<EditStickerRequest>,
+    data: Json<EditStickerReq>,
 ) -> actix_web::Result<HttpResponse, AppError> {
     let claim_data = claims.into_inner();
     let info = data.into_inner();

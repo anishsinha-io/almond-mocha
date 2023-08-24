@@ -12,6 +12,13 @@ pub mod rng {
     }
 }
 
+pub mod posts {
+    // TODO: Actually implement this
+    pub fn read_time(text: &str) -> i64 {
+        7
+    }
+}
+
 pub mod time {
     use std::time::{SystemTime, UNIX_EPOCH};
 

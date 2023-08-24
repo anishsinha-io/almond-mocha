@@ -25,3 +25,12 @@ pub enum AssetVisibility {
     Public,
     Private,
 }
+
+#[derive(sqlx::Type, Serialize, Deserialize, Debug, Clone, Copy)]
+#[sqlx(type_name = "jen.publish_status")]
+#[sqlx(rename_all = "lowercase")]
+pub enum PublishStatus {
+    Published,
+    Archived,
+    Draft,
+}

@@ -40,6 +40,13 @@ create type asset_visibility as enum(
   'private'
 );
 --
+-- publish_status type
+create type publish_status as enum(
+  'draft',
+  'published',
+  'archived'
+);
+--
 -- users table
 create table if not exists users(
   id uuid not null default uuid_generate_v4() primary key,
@@ -101,12 +108,11 @@ create table if not exists posts(
   id uuid not null default uuid_generate_v4() primary key,
   user_id uuid not null references users(id) on delete cascade,
   space_id uuid not null references spaces(id) on delete cascade,
-  image_uri text not null,
   title text not null,
   content text not null,
   read_time int not null,
   visibility asset_visibility not null default 'public' ::asset_visibility,
-  published boolean not null default false,
+  status publish_status not null default 'draft' ::publish_status,
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp
 );

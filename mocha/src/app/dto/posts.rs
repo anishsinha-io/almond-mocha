@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::app::types::AssetVisibility;
+
 #[derive(Serialize, Deserialize)]
 pub struct GetPostById {
     pub post_id: String,
@@ -11,14 +13,27 @@ pub struct GetPostsByUser {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CreatePost {
+pub struct CreateOrSaveDraft {
+    pub id: Option<String>,
     pub user_id: String,
+    pub space_id: String,
     pub title: String,
     pub content: String,
-    pub image_uri: String,
-    pub private: bool,
+    pub visibility: AssetVisibility,
     pub tags: Vec<String>,
-    pub read_time: u32,
+    pub read_time: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PublishPost {
+    pub user_id: String,
+    pub post_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ArchivePost {
+    pub user_id: String,
+    pub post_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
